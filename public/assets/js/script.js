@@ -1,5 +1,5 @@
 // DOM elements
-let databasesList, databaseDetail, databasesContainer, loading, backBtn, databaseTitle, databaseContent;
+let databasesList, databaseDetail, databasesContainer, loading, backBtn, databaseTitle, databaseContent, memberContent;
 
 // Initialize DOM elements after content is loaded
 function initializeDOMElements() {
@@ -12,6 +12,7 @@ function initializeDOMElements() {
     backBtn = document.getElementById('back-btn');
     databaseTitle = document.getElementById('database-title');
     databaseContent = document.getElementById('database-content');
+    memberContent = document.getElementById('member-content');
     
     console.log('DOM elements found:', {
         databasesList: !!databasesList,
@@ -20,7 +21,8 @@ function initializeDOMElements() {
         loading: !!loading,
         backBtn: !!backBtn,
         databaseTitle: !!databaseTitle,
-        databaseContent: !!databaseContent
+        databaseContent: !!databaseContent,
+        memberContent: !!memberContent
     });
     
     // Add event listeners if elements exist
@@ -30,24 +32,30 @@ function initializeDOMElements() {
     }
 }
 
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
+// DOM Content Loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking current path...');
     
-    // Check current route and load appropriate content
+    // Check current path to determine what to load
     const currentPath = window.location.pathname;
+    console.log('Current path:', currentPath);
     
-    // Update active navigation
-    updateActiveNavigation(currentPath);
-    
-    if (currentPath === '/logros') {
+    if (currentPath === '/') {
+        console.log('Loading main databases view...');
+        loadDatabases();
+    } else if (currentPath === '/logros') {
         console.log('Loading achievements directly...');
         loadAchievementsDirectly();
     } else if (currentPath === '/miembros') {
         console.log('Loading members directly...');
         loadMembersDirectly();
+    } else if (currentPath.startsWith('/miembros/')) {
+        // Handle individual member profile route
+        const memberId = currentPath.split('/')[2];
+        console.log('Loading individual member profile for ID:', memberId);
+        loadMemberProfileDirectly(memberId);
     } else {
-        console.log('Loading main page...');
+        console.log('Unknown path, loading main view...');
         loadDatabases();
     }
 });
@@ -362,27 +370,29 @@ function displayAchievementsTable(items, properties) {
     return tableContent;
 }
 
-// Display members in card format (existing functionality)
+// Display members in card format with clickable cards
 function displayMembersCards(items) {
     let cardsContent = '';
     
     items.forEach(item => {
-        cardsContent += `
-            <div class="item-card members">
-                <div class="item-properties">
-        `;
+        // Extract name and member type with safe fallbacks
+        const nameProperty = item.properties.Name || item.properties.Nombre || item.properties.Title;
+        const typeProperty = item.properties.Tipo || item.properties.Type || item.properties.Category || item.properties['Tipo de miembro'];
         
-        Object.entries(item.properties).forEach(([name, property]) => {
-            const value = extractPropertyValue(property);
-            cardsContent += `
-                <div class="item-property">
-                    <div class="item-property-label">${escapeHtml(name)}</div>
-                    <div class="item-property-value">${escapeHtml(value)}</div>
+        const name = nameProperty ? extractPropertyValue(nameProperty) : 'Sin nombre';
+        const memberType = typeProperty ? extractPropertyValue(typeProperty) : 'Sin tipo';
+        
+        cardsContent += `
+            <div class="item-card members clickable" onclick="viewMemberProfile('${item.id}', '${escapeHtml(name)}')">
+                <div class="card-header">
+                    <h3 class="member-name">${escapeHtml(name)}</h3>
+                    <span class="member-type-badge">${escapeHtml(memberType)}</span>
                 </div>
-            `;
-        });
-        
-        cardsContent += `
+                <div class="card-content">
+                    <p class="member-description">${escapeHtml(memberType)}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="click-hint">Click para ver perfil completo</span>
                 </div>
             </div>
         `;
@@ -393,6 +403,11 @@ function displayMembersCards(items) {
 
 // Extract readable value from Notion property
 function extractPropertyValue(property) {
+    // Safety check for undefined or null properties
+    if (!property || typeof property !== 'object') {
+        return 'No data';
+    }
+    
     switch (property.type) {
         case 'title':
             return property.title?.[0]?.plain_text || 'No title';
@@ -521,6 +536,153 @@ async function loadMembersDirectly() {
             loading.style.display = 'none';
         }
     }
+}
+
+// Load member profile directly from URL
+async function loadMemberProfileDirectly(memberId) {
+    try {
+        console.log('Loading member profile directly for ID:', memberId);
+        
+        // Create the member profile structure
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div id="member-profile" class="member-profile">
+                <div class="profile-header">
+                    <button id="back-btn" class="back-btn">← Volver a Miembros</button>
+                    <h2 id="member-title">Cargando perfil...</h2>
+                </div>
+                <div id="loading" class="loading">Cargando perfil del miembro...</div>
+                <div id="member-content"></div>
+            </div>
+        `;
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
+        if (loading) {
+            loading.style.display = 'block';
+        }
+        
+        // Fetch member data
+        console.log('Fetching member data from /api/miembros/' + memberId);
+        const response = await fetch(`/api/miembros/${memberId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const member = await response.json();
+        console.log('Member data received:', member);
+        
+        // Display member profile
+        displayMemberProfile(member);
+        
+        if (loading) {
+            loading.style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Error loading member profile:', error);
+        const memberContent = document.getElementById('member-content');
+        if (memberContent) {
+            memberContent.innerHTML = `
+                <div class="error-message">
+                    <p>Error al cargar el perfil del miembro: ${error.message}</p>
+                    <button onclick="window.location.href='/miembros'" class="action-btn">Volver a Miembros</button>
+                </div>
+            `;
+        }
+    }
+}
+
+// View member profile (updated to use proper URLs)
+function viewMemberProfile(memberId, memberName) {
+    console.log('Navigating to member profile:', memberId, memberName);
+    
+    // Update URL to show individual member profile
+    const newUrl = `/miembros/${memberId}`;
+    window.history.pushState({ memberId, memberName }, '', newUrl);
+    
+    // Load the member profile
+    loadMemberProfileDirectly(memberId);
+}
+
+// Display member profile with all data
+function displayMemberProfile(member) {
+    console.log('Displaying member profile:', member);
+    
+    const memberContent = document.getElementById('member-content');
+    if (!memberContent) {
+        console.error('Member content element not found');
+        return;
+    }
+    
+    let profileContent = `
+        <div class="member-profile-content">
+            <div class="profile-section">
+                <h3>Información del Miembro</h3>
+                <div class="profile-grid">
+    `;
+    
+    // Display all member properties in a grid
+    Object.entries(member.properties).forEach(([name, property]) => {
+        const value = extractPropertyValue(property);
+        const isNameProperty = name.toLowerCase().includes('name') || 
+                             name.toLowerCase().includes('nombre') || 
+                             name.toLowerCase().includes('title');
+        
+        if (isNameProperty) {
+            // Name property gets special styling
+            profileContent += `
+                <div class="profile-item name-item">
+                    <div class="profile-label">${escapeHtml(name)}</div>
+                    <div class="profile-value name-value">${escapeHtml(value)}</div>
+                </div>
+            `;
+        } else if (property.type === 'multi_select') {
+            // Multi-select properties get tag styling
+            const tags = property.multi_select || [];
+            if (tags.length > 0) {
+                const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
+                profileContent += `
+                    <div class="profile-item">
+                        <div class="profile-label">${escapeHtml(name)}</div>
+                        <div class="profile-value tags-value">${tagsHtml}</div>
+                    </div>
+                `;
+            } else {
+                profileContent += `
+                    <div class="profile-item">
+                        <div class="profile-label">${escapeHtml(name)}</div>
+                        <div class="profile-value">No seleccionado</div>
+                    </div>
+                `;
+            }
+        } else {
+            // Regular properties
+            profileContent += `
+                <div class="profile-item">
+                    <div class="profile-label">${escapeHtml(name)}</div>
+                    <div class="profile-value">${escapeHtml(value)}</div>
+                </div>
+            `;
+        }
+    });
+    
+    profileContent += `
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="action-btn" onclick="window.location.href='/miembros'">
+                    ← Volver a Miembros
+                </button>
+            </div>
+        </div>
+    `;
+    
+    memberContent.innerHTML = profileContent;
+    console.log('Member profile displayed successfully');
 }
 
 // Utility functions

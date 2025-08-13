@@ -72,14 +72,18 @@ app.get('/api/databases', async (req, res) => {
   }
 });
 
-// Direct route for achievements
+// Frontend routes for direct access
 app.get('/logros', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(__dirname + '/public/index.html');
 });
 
-// Direct route for members
 app.get('/miembros', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Individual member profile route
+app.get('/miembros/:id', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 // API route for achievements database
@@ -117,35 +121,41 @@ app.get('/api/logros', async (req, res) => {
 
 // API route for members database
 app.get('/api/miembros', async (req, res) => {
-  try {
-    const database = await notion.databases.retrieve({ 
-      database_id: CLUB_DATABASES.members 
-    });
-    
-    const response = await notion.databases.query({
-      database_id: CLUB_DATABASES.members,
-      page_size: 100
-    });
-    
-    const databaseInfo = {
-      id: database.id,
-      title: database.title?.[0]?.plain_text || 'Miembros del Club',
-      description: database.description?.[0]?.plain_text || '',
-      properties: database.properties,
-      type: 'members',
-      items: response.results.map(item => ({
-        id: item.id,
-        created_time: item.created_time,
-        last_edited_time: item.last_edited_time,
-        properties: item.properties
-      }))
-    };
-    
-    res.json(databaseInfo);
-  } catch (error) {
-    console.error('Error fetching members database:', error);
-    res.status(500).json({ error: 'Failed to fetch members database' });
-  }
+    try {
+        console.log('Fetching members database...');
+        const response = await notion.databases.query({
+            database_id: CLUB_DATABASES.members
+        });
+        
+        console.log(`Found ${response.results.length} members`);
+        res.json({
+            id: CLUB_DATABASES.members,
+            title: 'Miembros',
+            type: 'members',
+            items: response.results
+        });
+    } catch (error) {
+        console.error('Error fetching members:', error);
+        res.status(500).json({ error: 'Error fetching members database' });
+    }
+});
+
+// API route for individual member
+app.get('/api/miembros/:id', async (req, res) => {
+    try {
+        const memberId = req.params.id;
+        console.log('Fetching individual member:', memberId);
+        
+        const response = await notion.pages.retrieve({
+            page_id: memberId
+        });
+        
+        console.log('Member retrieved successfully');
+        res.json(response);
+    } catch (error) {
+        console.error('Error fetching member:', error);
+        res.status(500).json({ error: 'Error fetching member data' });
+    }
 });
 
 // Original database route for compatibility
