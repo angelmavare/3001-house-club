@@ -1,0 +1,344 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.databases-section {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+}
+
+.databases-section h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.databases-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.database-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.database-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.database-card.achievements {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+}
+
+.database-card.achievements:hover {
+    border-color: #ffc800;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+}
+
+.database-card.members {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
+}
+
+.database-card.members:hover {
+    border-color: #45a049;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.type-icon {
+    font-size: 1.5rem;
+}
+
+.type-label {
+    background: rgba(0,0,0,0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.database-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.database-card p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 15px;
+}
+
+.database-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.database-detail {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.database-detail.hidden {
+    display: none;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.back-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #5a6fd8;
+}
+
+#database-title {
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.database-info {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.database-type-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.database-type-badge.achievements {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.database-type-badge.members {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.database-description {
+    color: #666;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.database-properties {
+    margin-bottom: 30px;
+}
+
+.database-properties h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.property-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.property-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.property-type {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.database-items {
+    margin-top: 30px;
+}
+
+.database-items h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.item-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.item-card.achievements {
+    border-left: 4px solid #ffd700;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+}
+
+.item-card.members {
+    border-left: 4px solid #4CAF50;
+    background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
+}
+
+.item-properties {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.item-property {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.item-property-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.item-property-value {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.no-items {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+}
+
+.error {
+    background: #fee;
+    color: #c33;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #fcc;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .databases-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .properties-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-properties {
+        grid-template-columns: 1fr;
+    }
+} 
