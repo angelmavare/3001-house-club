@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
     min-height: 100vh;
     color: #333;
 }
@@ -32,6 +32,40 @@ header h1 {
 header p {
     font-size: 1.1rem;
     opacity: 0.9;
+}
+
+.main-nav {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.nav-link.active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
 }
 
 .databases-section {
@@ -78,23 +112,23 @@ header p {
 }
 
 .database-card.achievements {
-    border-color: #ffd700;
-    background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+    border-color: #4a7c59;
+    background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
 }
 
 .database-card.achievements:hover {
-    border-color: #ffc800;
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+    border-color: #3d6b4a;
+    box-shadow: 0 8px 25px rgba(74, 124, 89, 0.3);
 }
 
 .database-card.members {
-    border-color: #4CAF50;
-    background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
+    border-color: #5a8c6b;
+    background: linear-gradient(135deg, #f1f8f1 0%, #e8f5e8 100%);
 }
 
 .database-card.members:hover {
-    border-color: #45a049;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    border-color: #4a7c59;
+    box-shadow: 0 8px 25px rgba(90, 140, 107, 0.3);
 }
 
 .card-header {
@@ -196,15 +230,15 @@ header p {
 }
 
 .database-type-badge.achievements {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
+    background: #e8f5e8;
+    color: #1a4d2e;
+    border: 1px solid #4a7c59;
 }
 
 .database-type-badge.members {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background: #e8f5e8;
+    color: #1a4d2e;
+    border: 1px solid #5a8c6b;
 }
 
 .database-description {
@@ -271,13 +305,13 @@ header p {
 }
 
 .item-card.achievements {
-    border-left: 4px solid #ffd700;
-    background: linear-gradient(135deg, #fff9e6 0%, #fff5cc 100%);
+    border-left: 4px solid #4a7c59;
+    background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
 }
 
 .item-card.members {
-    border-left: 4px solid #4CAF50;
-    background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
+    border-left: 4px solid #5a8c6b;
+    background: linear-gradient(135deg, #f1f8f1 0%, #e8f5e8 100%);
 }
 
 /* Table styles for achievements */
@@ -297,7 +331,7 @@ header p {
 }
 
 .achievements-table thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
     color: white;
 }
 
@@ -342,8 +376,8 @@ header p {
 .achievements-table td.name-cell {
     font-weight: 600;
     color: #333;
-    background: rgba(255, 215, 0, 0.1);
-    border-right: 2px solid #ffd700;
+    background: rgba(74, 124, 89, 0.1);
+    border-right: 2px solid #4a7c59;
 }
 
 /* Tags styling for Tipo column */
@@ -353,7 +387,7 @@ header p {
 
 .tag {
     display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
     color: white;
     padding: 4px 8px;
     margin: 2px;
@@ -369,6 +403,7 @@ header p {
 .tag:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #2d5a3d 0%, #3d6b4a 100%);
 }
 
 /* Multiple tags spacing */

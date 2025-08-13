@@ -1,25 +1,92 @@
 // DOM elements
-const databasesList = document.getElementById('databases-list');
-const databaseDetail = document.getElementById('database-detail');
-const databasesContainer = document.getElementById('databases-container');
-const loading = document.getElementById('loading');
-const backBtn = document.getElementById('back-btn');
-const databaseTitle = document.getElementById('database-title');
-const databaseContent = document.getElementById('database-content');
+let databasesList, databaseDetail, databasesContainer, loading, backBtn, databaseTitle, databaseContent;
 
-// Event listeners
-backBtn.addEventListener('click', showDatabasesList);
+// Initialize DOM elements after content is loaded
+function initializeDOMElements() {
+    console.log('Initializing DOM elements...');
+    
+    databasesList = document.getElementById('databases-list');
+    databaseDetail = document.getElementById('database-detail');
+    databasesContainer = document.getElementById('databases-container');
+    loading = document.getElementById('loading');
+    backBtn = document.getElementById('back-btn');
+    databaseTitle = document.getElementById('database-title');
+    databaseContent = document.getElementById('database-content');
+    
+    console.log('DOM elements found:', {
+        databasesList: !!databasesList,
+        databaseDetail: !!databaseDetail,
+        databasesContainer: !!databasesContainer,
+        loading: !!loading,
+        backBtn: !!backBtn,
+        databaseTitle: !!databaseTitle,
+        databaseContent: !!databaseContent
+    });
+    
+    // Add event listeners if elements exist
+    if (backBtn) {
+        backBtn.addEventListener('click', showDatabasesList);
+        console.log('Back button event listener added');
+    }
+}
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing app...');
-    loadDatabases();
+    
+    // Check current route and load appropriate content
+    const currentPath = window.location.pathname;
+    
+    // Update active navigation
+    updateActiveNavigation(currentPath);
+    
+    if (currentPath === '/logros') {
+        console.log('Loading achievements directly...');
+        loadAchievementsDirectly();
+    } else if (currentPath === '/miembros') {
+        console.log('Loading members directly...');
+        loadMembersDirectly();
+    } else {
+        console.log('Loading main page...');
+        loadDatabases();
+    }
 });
+
+// Update active navigation link
+function updateActiveNavigation(currentPath) {
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        
+        if (currentPath === '/' && link.getAttribute('href') === '/') {
+            link.classList.add('active');
+        } else if (currentPath === '/logros' && link.getAttribute('href') === '/logros') {
+            link.classList.add('active');
+        } else if (currentPath === '/miembros' && link.getAttribute('href') === '/miembros') {
+            link.classList.add('active');
+        }
+    });
+}
 
 // Load all databases
 async function loadDatabases() {
     try {
         console.log('Starting to load databases...');
+        
+        // Create the main page structure
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div id="databases-list" class="databases-section">
+                <h2>Club Databases</h2>
+                <div id="loading" class="loading">Loading club databases...</div>
+                <div id="databases-container" class="databases-grid"></div>
+            </div>
+        `;
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
         loading.style.display = 'block';
         databasesContainer.innerHTML = '';
         
@@ -44,9 +111,13 @@ async function loadDatabases() {
         displayDatabases(databases);
     } catch (error) {
         console.error('Error loading databases:', error);
-        databasesContainer.innerHTML = `<p class="error">Error al cargar las bases de datos del club: ${error.message}. Por favor verifica tu clave API y que las bases de datos estén disponibles.</p>`;
+        if (databasesContainer) {
+            databasesContainer.innerHTML = `<p class="error">Error al cargar las bases de datos del club: ${error.message}. Por favor verifica tu clave API y que las bases de datos estén disponibles.</p>`;
+        }
     } finally {
-        loading.style.display = 'none';
+        if (loading) {
+            loading.style.display = 'none';
+        }
     }
 }
 
@@ -78,25 +149,63 @@ function displayDatabases(databases) {
 async function viewDatabase(databaseId) {
     try {
         console.log('Viewing database:', databaseId);
-        loading.style.display = 'block';
         
+        // Create the database detail structure
+        const mainContent = document.getElementById('main-content');
+        console.log('Main content element:', mainContent);
+        
+        mainContent.innerHTML = `
+            <div id="database-detail" class="database-detail">
+                <div class="detail-header">
+                    <button id="back-btn" class="back-btn">← Back to Club Databases</button>
+                    <h2 id="database-title"></h2>
+                </div>
+                <div id="loading" class="loading">Loading database...</div>
+                <div id="database-content"></div>
+            </div>
+        `;
+        
+        console.log('HTML structure created, initializing DOM elements...');
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
+        console.log('DOM elements initialized, setting loading...');
+        if (loading) {
+            loading.style.display = 'block';
+        }
+        
+        console.log('Fetching database data...');
         const response = await fetch(`/api/databases/${databaseId}`);
         const database = await response.json();
+        console.log('Database data received:', database);
         
+        console.log('Displaying database detail...');
         displayDatabaseDetail(database);
-        showDatabaseDetail();
+        
     } catch (error) {
         console.error('Error loading database:', error);
-        databaseContent.innerHTML = '<p class="error">Failed to load database details.</p>';
-        showDatabaseDetail();
+        if (databaseContent) {
+            databaseContent.innerHTML = '<p class="error">Failed to load database details.</p>';
+        }
     } finally {
-        loading.style.display = 'none';
+        if (loading) {
+            loading.style.display = 'none';
+        }
     }
 }
 
 // Display database details
 function displayDatabaseDetail(database) {
     console.log('Displaying database detail:', database);
+    console.log('databaseTitle element:', databaseTitle);
+    console.log('databaseContent element:', databaseContent);
+    
+    if (!databaseTitle || !databaseContent) {
+        console.error('Required DOM elements not found!');
+        return;
+    }
+    
     databaseTitle.textContent = database.title;
     
     const typeLabel = database.type === 'achievements' ? '🏆 Base de Datos de Logros' : '👥 Base de Datos de Miembros';
@@ -147,7 +256,9 @@ function displayDatabaseDetail(database) {
     }
     
     content += '</div>';
+    console.log('Setting content HTML...');
     databaseContent.innerHTML = content;
+    console.log('Content HTML set successfully');
 }
 
 // Display achievements as a table
@@ -312,16 +423,104 @@ function extractPropertyValue(property) {
     }
 }
 
-// Show database detail view
-function showDatabaseDetail() {
-    databasesList.style.display = 'none';
-    databaseDetail.classList.remove('hidden');
-}
-
 // Show databases list view
 function showDatabasesList() {
-    databaseDetail.classList.add('hidden');
-    databasesList.style.display = 'block';
+    // Navigate back to the main page
+    window.location.href = '/';
+}
+
+// Load achievements database directly
+async function loadAchievementsDirectly() {
+    try {
+        // Create the database detail structure
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div id="database-detail" class="database-detail">
+                <div class="detail-header">
+                    <button id="back-btn" class="back-btn">← Back to Club Databases</button>
+                    <h2 id="database-title"></h2>
+                </div>
+                <div id="loading" class="loading">Loading achievements...</div>
+                <div id="database-content"></div>
+            </div>
+        `;
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
+        loading.style.display = 'block';
+        
+        console.log('Fetching achievements from /api/logros...');
+        const response = await fetch('/api/logros');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const database = await response.json();
+        console.log('Achievements data:', database);
+        
+        // Set title and display content
+        databaseTitle.textContent = database.title;
+        displayDatabaseDetail(database);
+        
+    } catch (error) {
+        console.error('Error loading achievements:', error);
+        if (databaseContent) {
+            databaseContent.innerHTML = `<p class="error">Error al cargar los logros: ${error.message}</p>`;
+        }
+    } finally {
+        if (loading) {
+            loading.style.display = 'none';
+        }
+    }
+}
+
+// Load members database directly
+async function loadMembersDirectly() {
+    try {
+        // Create the database detail structure
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div id="database-detail" class="database-detail">
+                <div class="detail-header">
+                    <button id="back-btn" class="back-btn">← Back to Club Databases</button>
+                    <h2 id="database-title"></h2>
+                </div>
+                <div id="loading" class="loading">Loading members...</div>
+                <div id="database-content"></div>
+            </div>
+        `;
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
+        loading.style.display = 'block';
+        
+        console.log('Fetching members from /api/miembros...');
+        const response = await fetch('/api/miembros');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const database = await response.json();
+        console.log('Members data:', database);
+        
+        // Set title and display content
+        databaseTitle.textContent = database.title;
+        displayDatabaseDetail(database);
+        
+    } catch (error) {
+        console.error('Error loading members:', error);
+        if (databaseContent) {
+            databaseContent.innerHTML = `<p class="error">Error al cargar los miembros: ${error.message}</p>`;
+        }
+    } finally {
+        if (loading) {
+            loading.style.display = 'none';
+        }
+    }
 }
 
 // Utility functions

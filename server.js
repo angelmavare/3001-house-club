@@ -72,6 +72,83 @@ app.get('/api/databases', async (req, res) => {
   }
 });
 
+// Direct route for achievements
+app.get('/logros', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+// Direct route for members
+app.get('/miembros', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+// API route for achievements database
+app.get('/api/logros', async (req, res) => {
+  try {
+    const database = await notion.databases.retrieve({ 
+      database_id: CLUB_DATABASES.achievements 
+    });
+    
+    const response = await notion.databases.query({
+      database_id: CLUB_DATABASES.achievements,
+      page_size: 100
+    });
+    
+    const databaseInfo = {
+      id: database.id,
+      title: database.title?.[0]?.plain_text || 'Logros del Club',
+      description: database.description?.[0]?.plain_text || '',
+      properties: database.properties,
+      type: 'achievements',
+      items: response.results.map(item => ({
+        id: item.id,
+        created_time: item.created_time,
+        last_edited_time: item.last_edited_time,
+        properties: item.properties
+      }))
+    };
+    
+    res.json(databaseInfo);
+  } catch (error) {
+    console.error('Error fetching achievements database:', error);
+    res.status(500).json({ error: 'Failed to fetch achievements database' });
+  }
+});
+
+// API route for members database
+app.get('/api/miembros', async (req, res) => {
+  try {
+    const database = await notion.databases.retrieve({ 
+      database_id: CLUB_DATABASES.members 
+    });
+    
+    const response = await notion.databases.query({
+      database_id: CLUB_DATABASES.members,
+      page_size: 100
+    });
+    
+    const databaseInfo = {
+      id: database.id,
+      title: database.title?.[0]?.plain_text || 'Miembros del Club',
+      description: database.description?.[0]?.plain_text || '',
+      properties: database.properties,
+      type: 'members',
+      items: response.results.map(item => ({
+        id: item.id,
+        created_time: item.created_time,
+        last_edited_time: item.last_edited_time,
+        properties: item.properties
+      }))
+    };
+    
+    res.json(databaseInfo);
+  } catch (error) {
+    console.error('Error fetching members database:', error);
+    res.status(500).json({ error: 'Failed to fetch members database' });
+  }
+});
+
+// Original database route for compatibility
 app.get('/api/databases/:id', async (req, res) => {
   try {
     const { id } = req.params;

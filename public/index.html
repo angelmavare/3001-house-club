@@ -4,32 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3001 Club House</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🏠 3001 Club House</h1>
             <p>Club achievements and members showcase</p>
+            <nav class="main-nav">
+                <a href="/" class="nav-link">🏠 Inicio</a>
+                <a href="/logros" class="nav-link">🏆 Logros</a>
+                <a href="/miembros" class="nav-link">👥 Miembros</a>
+            </nav>
         </header>
-
-        <main>
-            <div id="databases-list" class="databases-section">
-                <h2>Club Databases</h2>
-                <div id="loading" class="loading">Loading club databases...</div>
-                <div id="databases-container" class="databases-grid"></div>
-            </div>
-
-            <div id="database-detail" class="database-detail hidden">
-                <div class="detail-header">
-                    <button id="back-btn" class="back-btn">← Back to Club Databases</button>
-                    <h2 id="database-title"></h2>
-                </div>
-                <div id="database-content"></div>
-            </div>
+        
+        <main id="main-content">
+            <!-- Content will be dynamically loaded here -->
         </main>
     </div>
-
-    <script src="script.js"></script>
+    
+    <script src="/assets/js/script.js"></script>
 </body>
 </html> 
