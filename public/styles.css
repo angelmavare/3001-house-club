@@ -280,6 +280,122 @@ header p {
     background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
 }
 
+/* Table styles for achievements */
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.achievements-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.achievements-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.achievements-table th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+}
+
+.achievements-table th.name-column {
+    background: rgba(255,255,255,0.1);
+    font-weight: 700;
+    min-width: 200px;
+}
+
+.achievements-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.achievements-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.achievements-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.achievements-table tbody tr:nth-child(even):hover {
+    background-color: #e9ecef;
+}
+
+.achievements-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: top;
+}
+
+.achievements-table td.name-cell {
+    font-weight: 600;
+    color: #333;
+    background: rgba(255, 215, 0, 0.1);
+    border-right: 2px solid #ffd700;
+}
+
+/* Tags styling for Tipo column */
+.tags-cell {
+    padding: 8px 12px !important;
+}
+
+.tag {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+}
+
+.tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* Multiple tags spacing */
+.tags-cell .tag + .tag {
+    margin-left: 4px;
+}
+
+.achievements-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .achievements-table {
+        font-size: 0.8rem;
+    }
+    
+    .achievements-table th,
+    .achievements-table td {
+        padding: 8px 6px;
+    }
+    
+    .achievements-table th.name-column {
+        min-width: 150px;
+    }
+}
+
 .item-properties {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

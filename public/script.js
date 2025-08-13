@@ -133,35 +133,151 @@ function displayDatabaseDetail(database) {
             <h3>${typeDescription} (${database.items.length})</h3>
     `;
     
-    // Display database items with better formatting for each type
+    // Display database items with different formats based on type
     if (database.items.length === 0) {
         content += `<p class="no-items">No se encontraron ${database.type === 'achievements' ? 'logros' : 'miembros'} en esta base de datos.</p>`;
     } else {
-        database.items.forEach(item => {
-            content += `
-                <div class="item-card ${database.type}">
-                    <div class="item-properties">
-            `;
-            
-            Object.entries(item.properties).forEach(([name, property]) => {
-                const value = extractPropertyValue(property);
-                content += `
-                    <div class="item-property">
-                        <div class="item-property-label">${escapeHtml(name)}</div>
-                        <div class="item-property-value">${escapeHtml(value)}</div>
-                    </div>
-                `;
-            });
-            
-            content += `
-                    </div>
-                </div>
-            `;
-        });
+        if (database.type === 'achievements') {
+            // Display achievements as a table
+            content += displayAchievementsTable(database.items, database.properties);
+        } else {
+            // Display members in the current card format
+            content += displayMembersCards(database.items);
+        }
     }
     
     content += '</div>';
     databaseContent.innerHTML = content;
+}
+
+// Display achievements as a table
+function displayAchievementsTable(items, properties) {
+    // Get property names for table headers
+    const propertyNames = Object.keys(properties);
+    
+    let tableContent = `
+        <div class="table-container">
+            <table class="achievements-table">
+                <thead>
+                    <tr>
+    `;
+    
+    // Create table headers
+    propertyNames.forEach(propName => {
+        const isNameColumn = propName.toLowerCase().includes('name') || 
+                           propName.toLowerCase().includes('nombre') ||
+                           propName.toLowerCase().includes('title') ||
+                           propName.toLowerCase().includes('título');
+        
+        if (isNameColumn) {
+            // Name column first
+            tableContent += `<th class="name-column">${escapeHtml(propName)}</th>`;
+        }
+    });
+    
+    // Add other columns
+    propertyNames.forEach(propName => {
+        const isNameColumn = propName.toLowerCase().includes('name') || 
+                           propName.toLowerCase().includes('nombre') ||
+                           propName.toLowerCase().includes('title') ||
+                           propName.toLowerCase().includes('título');
+        
+        if (!isNameColumn) {
+            tableContent += `<th>${escapeHtml(propName)}</th>`;
+        }
+    });
+    
+    tableContent += `
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Create table rows
+    items.forEach(item => {
+        tableContent += '<tr>';
+        
+        // Add name column first
+        propertyNames.forEach(propName => {
+            const isNameColumn = propName.toLowerCase().includes('name') || 
+                               propName.toLowerCase().includes('nombre') ||
+                               propName.toLowerCase().includes('title') ||
+                               propName.toLowerCase().includes('título');
+            
+            if (isNameColumn) {
+                const value = extractPropertyValue(item.properties[propName]);
+                tableContent += `<td class="name-cell">${escapeHtml(value)}</td>`;
+            }
+        });
+        
+        // Add other columns
+        propertyNames.forEach(propName => {
+            const isNameColumn = propName.toLowerCase().includes('name') || 
+                               propName.toLowerCase().includes('nombre') ||
+                               propName.toLowerCase().includes('title') ||
+                               propName.toLowerCase().includes('título');
+            
+            if (!isNameColumn) {
+                const isTipoColumn = propName.toLowerCase().includes('tipo') || 
+                                   propName.toLowerCase().includes('type') ||
+                                   propName.toLowerCase().includes('category') ||
+                                   propName.toLowerCase().includes('categoría');
+                
+                if (isTipoColumn && item.properties[propName]?.type === 'multi_select') {
+                    // Display Tipo column as tags
+                    const tags = item.properties[propName].multi_select || [];
+                    if (tags.length > 0) {
+                        const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
+                        tableContent += `<td class="tags-cell">${tagsHtml}</td>`;
+                    } else {
+                        tableContent += `<td class="tags-cell">No tags</td>`;
+                    }
+                } else {
+                    const value = extractPropertyValue(item.properties[propName]);
+                    tableContent += `<td>${escapeHtml(value)}</td>`;
+                }
+            }
+        });
+        
+        tableContent += '</tr>';
+    });
+    
+    tableContent += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    return tableContent;
+}
+
+// Display members in card format (existing functionality)
+function displayMembersCards(items) {
+    let cardsContent = '';
+    
+    items.forEach(item => {
+        cardsContent += `
+            <div class="item-card members">
+                <div class="item-properties">
+        `;
+        
+        Object.entries(item.properties).forEach(([name, property]) => {
+            const value = extractPropertyValue(property);
+            cardsContent += `
+                <div class="item-property">
+                    <div class="item-property-label">${escapeHtml(name)}</div>
+                    <div class="item-property-value">${escapeHtml(value)}</div>
+                </div>
+            `;
+        });
+        
+        cardsContent += `
+                </div>
+            </div>
+        `;
+    });
+    
+    return cardsContent;
 }
 
 // Extract readable value from Notion property
@@ -176,7 +292,11 @@ function extractPropertyValue(property) {
         case 'select':
             return property.select?.name || 'No selection';
         case 'multi_select':
-            return property.multi_select?.map(s => s.name).join(', ') || 'No selections';
+            // Special handling for "Tipo" column - display as tags
+            if (property.multi_select && property.multi_select.length > 0) {
+                return property.multi_select.map(s => s.name).join(', ');
+            }
+            return 'No selections';
         case 'date':
             return property.date ? formatDate(property.date.start) : 'No date';
         case 'checkbox':
