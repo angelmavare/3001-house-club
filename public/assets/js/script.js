@@ -144,7 +144,7 @@ async function loadDatabases() {
 function displayDatabases(databases) {
     console.log('Displaying databases:', databases);
     databasesContainer.innerHTML = databases.map(db => {
-        const typeIcon = db.type === 'achievements' ? '🏆' : '👥';
+        const typeIcon = db.type === 'achievements' ? '<span class="material-symbols-outlined">emoji_events</span>' : '<span class="material-symbols-outlined">group</span>';
         const typeLabel = db.type === 'achievements' ? 'Logros' : 'Miembros';
         
         return `
@@ -228,7 +228,7 @@ function displayDatabaseDetail(database) {
     console.log('displayDatabaseDetail: Setting title to:', database.title);
     databaseTitle.textContent = database.title;
     
-    const typeLabel = database.type === 'achievements' ? '🏆 Base de Datos de Logros' : '👥 Base de Datos de Miembros';
+    const typeLabel = database.type === 'achievements' ? '<span class="material-symbols-outlined">emoji_events</span> Base de Datos de Logros' : '<span class="material-symbols-outlined">group</span> Base de Datos de Miembros';
     const typeDescription = database.type === 'achievements' ? 'Logros del Club' : 'Miembros del Club';
     
     console.log('displayDatabaseDetail: Database type:', database.type);
@@ -428,6 +428,7 @@ function sortMembersByHierarchy(members) {
         'Sargento de armas',
         'Secretario',
         'Tesorero',
+        'Capitan de ruta',
         'Full Patch',
         'Prospecto',
         'Hangaround',
