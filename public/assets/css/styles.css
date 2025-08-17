@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: aliceblue;
     color: #ffffff;
     min-height: 100vh;
 }
@@ -478,6 +478,7 @@ body {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
     vertical-align: top;
+    color: black;
 }
 
 .achievements-table td.name-cell {
