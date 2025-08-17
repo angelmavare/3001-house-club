@@ -419,11 +419,68 @@ function displayAchievementsTable(items, properties) {
     return tableContent;
 }
 
+// Sort members according to hierarchy and filter out retired members
+function sortMembersByHierarchy(members) {
+    // Define the hierarchy order (lower index = higher priority)
+    const hierarchy = [
+        'Presidente',
+        'Vicepresidente', 
+        'Sargento de armas',
+        'Secretario',
+        'Tesorero',
+        'Full Patch',
+        'Prospecto',
+        'Hangaround',
+        'Support'
+    ];
+    
+    return members
+        .filter(member => {
+            // Filter out retired members
+            if (!member.properties) return false;
+            
+            const typeProperty = member.properties.Tipo || member.properties.Type || member.properties.Category || member.properties['Tipo de miembro'];
+            if (!typeProperty) return false;
+            
+            const memberType = extractPropertyValue(typeProperty);
+            return memberType !== 'Retirado';
+        })
+        .sort((a, b) => {
+            // Get member types
+            const typeA = a.properties.Tipo || a.properties.Type || a.properties.Category || a.properties['Tipo de miembro'];
+            const typeB = b.properties.Tipo || b.properties.Type || b.properties.Category || b.properties['Tipo de miembro'];
+            
+            if (!typeA || !typeB) return 0;
+            
+            const memberTypeA = extractPropertyValue(typeA);
+            const memberTypeB = extractPropertyValue(typeB);
+            
+            // Get hierarchy positions
+            const positionA = hierarchy.indexOf(memberTypeA);
+            const positionB = hierarchy.indexOf(memberTypeB);
+            
+            // If both are in hierarchy, sort by position
+            if (positionA !== -1 && positionB !== -1) {
+                return positionA - positionB;
+            }
+            
+            // If only one is in hierarchy, prioritize the one in hierarchy
+            if (positionA !== -1) return -1;
+            if (positionB !== -1) return 1;
+            
+            // If neither is in hierarchy, maintain original order
+            return 0;
+        });
+}
+
 // Display members in card format with clickable cards
 function displayMembersCards(items) {
+    // Sort members by hierarchy first
+    const sortedItems = sortMembersByHierarchy(items);
+    
     let cardsContent = '';
     
-    items.forEach(item => {
+    sortedItems.forEach(item => {
         // Safety check for item properties
         if (!item.properties || typeof item.properties !== 'object') {
             console.warn('displayMembersCards: Item has no properties:', item);
