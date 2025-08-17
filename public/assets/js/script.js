@@ -27,8 +27,19 @@ function initializeDOMElements() {
     
     // Add event listeners if elements exist
     if (backBtn) {
-        backBtn.addEventListener('click', showDatabasesList);
-        console.log('Back button event listener added');
+        // Check if we're in a member profile context
+        const currentPath = window.location.pathname;
+        if (currentPath.startsWith('/miembros/')) {
+            // In member profile, go back to members list
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/miembros';
+            });
+            console.log('Back button configured for member profile');
+        } else {
+            // In database view, go back to main databases list
+            backBtn.addEventListener('click', showDatabasesList);
+            console.log('Back button configured for database view');
+        }
     }
 }
 
@@ -205,19 +216,24 @@ async function viewDatabase(databaseId) {
 
 // Display database details
 function displayDatabaseDetail(database) {
-    console.log('Displaying database detail:', database);
-    console.log('databaseTitle element:', databaseTitle);
-    console.log('databaseContent element:', databaseContent);
+    console.log('displayDatabaseDetail: Starting with database:', database);
+    console.log('displayDatabaseDetail: databaseTitle element:', databaseTitle);
+    console.log('displayDatabaseDetail: databaseContent element:', databaseContent);
     
     if (!databaseTitle || !databaseContent) {
-        console.error('Required DOM elements not found!');
+        console.error('displayDatabaseDetail: Required DOM elements not found!');
         return;
     }
     
+    console.log('displayDatabaseDetail: Setting title to:', database.title);
     databaseTitle.textContent = database.title;
     
     const typeLabel = database.type === 'achievements' ? '🏆 Base de Datos de Logros' : '👥 Base de Datos de Miembros';
     const typeDescription = database.type === 'achievements' ? 'Logros del Club' : 'Miembros del Club';
+    
+    console.log('displayDatabaseDetail: Database type:', database.type);
+    console.log('displayDatabaseDetail: Type label:', typeLabel);
+    console.log('displayDatabaseDetail: Type description:', typeDescription);
     
     let content = `
         <div class="database-info">
@@ -226,53 +242,86 @@ function displayDatabaseDetail(database) {
             </div>
             <p class="database-description">${escapeHtml(database.description || 'No description available')}</p>
         </div>
-        
-        <div class="database-properties">
-            <h3>Estructura de la Base de Datos</h3>
-            <div class="properties-grid">
     `;
     
-    // Display database properties
-    Object.entries(database.properties).forEach(([name, property]) => {
+    // Only show properties section if properties exist
+    if (database.properties && typeof database.properties === 'object') {
         content += `
-            <div class="property-item">
-                <div class="property-name">${escapeHtml(name)}</div>
-                <div class="property-type">${property.type}</div>
+            <div class="database-properties">
+                <h3>Estructura de la Base de Datos</h3>
+                <div class="properties-grid">
+        `;
+        
+        // Display database properties
+        Object.entries(database.properties).forEach(([name, property]) => {
+            content += `
+                <div class="property-item">
+                    <div class="property-name">${escapeHtml(name)}</div>
+                    <div class="property-type">${property.type}</div>
+                </div>
+            `;
+        });
+        
+        content += `
+                </div>
             </div>
         `;
-    });
-    
-    content += `
-            </div>
-        </div>
-        
-        <div class="database-items">
-            <h3>${typeDescription} (${database.items.length})</h3>
-    `;
-    
-    // Display database items with different formats based on type
-    if (database.items.length === 0) {
-        content += `<p class="no-items">No se encontraron ${database.type === 'achievements' ? 'logros' : 'miembros'} en esta base de datos.</p>`;
     } else {
-        if (database.type === 'achievements') {
-            // Display achievements as a table
-            content += displayAchievementsTable(database.items, database.properties);
-        } else {
-            // Display members in the current card format
-            content += displayMembersCards(database.items);
-        }
+        console.warn('displayDatabaseDetail: No properties found in database');
     }
     
-    content += '</div>';
-    console.log('Setting content HTML...');
+    // Only show items section if items exist
+    if (database.items && Array.isArray(database.items)) {
+        content += `
+            <div class="database-items">
+                <h3>${typeDescription} (${database.items.length})</h3>
+        `;
+        
+        // Display database items with different formats based on type
+        if (database.items.length === 0) {
+            content += `<p class="no-items">No se encontraron ${database.type === 'achievements' ? 'logros' : 'miembros'} en esta base de datos.</p>`;
+        } else {
+            if (database.type === 'achievements') {
+                // Display achievements as a table
+                console.log('displayDatabaseDetail: Displaying achievements table');
+                content += displayAchievementsTable(database.items, database.properties || {});
+            } else {
+                // Display members in the current card format
+                console.log('displayDatabaseDetail: Displaying members cards');
+                content += displayMembersCards(database.items);
+            }
+        }
+        
+        content += '</div>';
+    } else {
+        console.warn('displayDatabaseDetail: No items found in database');
+        content += `
+            <div class="database-items">
+                <h3>${typeDescription}</h3>
+                <p class="no-items">No se pudieron cargar los datos de la base de datos.</p>
+            </div>
+        `;
+    }
+    
+    console.log('displayDatabaseDetail: Setting content HTML...');
     databaseContent.innerHTML = content;
-    console.log('Content HTML set successfully');
+    console.log('displayDatabaseDetail: Content HTML set successfully');
 }
 
 // Display achievements as a table
 function displayAchievementsTable(items, properties) {
+    // Safety check for properties
+    if (!properties || typeof properties !== 'object') {
+        console.warn('displayAchievementsTable: No properties provided, using empty object');
+        properties = {};
+    }
+    
     // Get property names for table headers
     const propertyNames = Object.keys(properties);
+    
+    if (propertyNames.length === 0) {
+        return '<p class="no-items">No se encontraron propiedades para mostrar en la tabla.</p>';
+    }
     
     let tableContent = `
         <div class="table-container">
@@ -375,6 +424,22 @@ function displayMembersCards(items) {
     let cardsContent = '';
     
     items.forEach(item => {
+        // Safety check for item properties
+        if (!item.properties || typeof item.properties !== 'object') {
+            console.warn('displayMembersCards: Item has no properties:', item);
+            cardsContent += `
+                <div class="item-card members">
+                    <div class="item-properties">
+                        <div class="item-property">
+                            <div class="item-property-label">Error</div>
+                            <div class="item-property-value">No se pudieron cargar las propiedades del miembro</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
         // Extract name and member type with safe fallbacks
         const nameProperty = item.properties.Name || item.properties.Nombre || item.properties.Title;
         const typeProperty = item.properties.Tipo || item.properties.Type || item.properties.Category || item.properties['Tipo de miembro'];
@@ -433,6 +498,61 @@ function extractPropertyValue(property) {
             return property.email || 'No email';
         case 'phone_number':
             return property.phone_number || 'No phone';
+        case 'formula':
+            // Handle formula properties - they can return different types
+            if (property.formula) {
+                switch (property.formula.type) {
+                    case 'string':
+                        return property.formula.string || 'No formula result';
+                    case 'number':
+                        return property.formula.number || 'No formula result';
+                    case 'boolean':
+                        return property.formula.boolean ? 'Yes' : 'No';
+                    case 'date':
+                        return property.formula.date ? formatDate(property.formula.date.start) : 'No date';
+                    default:
+                        return 'Formula result unavailable';
+                }
+            }
+            return 'No formula result';
+        case 'rollup':
+            // Handle rollup properties - they aggregate data from related databases
+            if (property.rollup) {
+                switch (property.rollup.type) {
+                    case 'array':
+                        // For array rollups (like multiple related items)
+                        if (property.rollup.array && property.rollup.array.length > 0) {
+                            // Extract the most relevant information from each item
+                            const items = property.rollup.array.map(item => {
+                                if (item.type === 'title' && item.title?.[0]?.plain_text) {
+                                    return item.title[0].plain_text;
+                                } else if (item.type === 'rich_text' && item.rich_text?.[0]?.plain_text) {
+                                    return item.rich_text[0].plain_text;
+                                } else if (item.type === 'select' && item.select?.name) {
+                                    return item.select.name;
+                                } else if (item.type === 'number' && item.number !== null) {
+                                    return item.number;
+                                } else {
+                                    return 'Related item';
+                                }
+                            });
+                            return items.join(', ');
+                        }
+                        return 'No related items';
+                    case 'number':
+                        // For number rollups (like sums, counts, etc.)
+                        return property.rollup.number || 'No rollup result';
+                    case 'date':
+                        // For date rollups (like earliest, latest dates)
+                        if (property.rollup.date) {
+                            return formatDate(property.rollup.date.start);
+                        }
+                        return 'No date rollup';
+                    default:
+                        return 'Rollup data unavailable';
+                }
+            }
+            return 'No rollup data';
         default:
             return 'Unsupported type';
     }
@@ -494,12 +614,20 @@ async function loadAchievementsDirectly() {
 // Load members database directly
 async function loadMembersDirectly() {
     try {
+        console.log('loadMembersDirectly: Starting...');
+        
         // Create the database detail structure
         const mainContent = document.getElementById('main-content');
+        if (!mainContent) {
+            console.error('loadMembersDirectly: Main content element not found');
+            return;
+        }
+        
+        console.log('loadMembersDirectly: Creating HTML structure...');
         mainContent.innerHTML = `
             <div id="database-detail" class="database-detail">
                 <div class="detail-header">
-                    <button id="back-btn" class="back-btn">← Back to Club Databases</button>
+                    <button id="back-btn" class="back-btn">← Volver a Club Databases</button>
                     <h2 id="database-title"></h2>
                 </div>
                 <div id="loading" class="loading">Loading members...</div>
@@ -507,12 +635,19 @@ async function loadMembersDirectly() {
             </div>
         `;
         
+        console.log('loadMembersDirectly: HTML structure created, initializing DOM elements...');
+        
         // Initialize DOM elements after creating HTML
         initializeDOMElements();
         
-        loading.style.display = 'block';
+        if (loading) {
+            console.log('loadMembersDirectly: Setting loading to visible');
+            loading.style.display = 'block';
+        } else {
+            console.warn('loadMembersDirectly: Loading element not found');
+        }
         
-        console.log('Fetching members from /api/miembros...');
+        console.log('loadMembersDirectly: Fetching members from /api/miembros...');
         const response = await fetch('/api/miembros');
         
         if (!response.ok) {
@@ -520,19 +655,31 @@ async function loadMembersDirectly() {
         }
         
         const database = await response.json();
-        console.log('Members data:', database);
+        console.log('loadMembersDirectly: Members data received:', database);
+        console.log('loadMembersDirectly: Database properties:', database.properties);
+        console.log('loadMembersDirectly: Database items:', database.items);
+        console.log('loadMembersDirectly: Database type:', database.type);
+        console.log('loadMembersDirectly: Database title:', database.title);
         
         // Set title and display content
-        databaseTitle.textContent = database.title;
+        if (databaseTitle) {
+            databaseTitle.textContent = database.title;
+            console.log('loadMembersDirectly: Title set to:', database.title);
+        } else {
+            console.warn('loadMembersDirectly: databaseTitle element not found');
+        }
+        
+        console.log('loadMembersDirectly: Calling displayDatabaseDetail...');
         displayDatabaseDetail(database);
         
     } catch (error) {
-        console.error('Error loading members:', error);
+        console.error('loadMembersDirectly: Error loading members:', error);
         if (databaseContent) {
             databaseContent.innerHTML = `<p class="error">Error al cargar los miembros: ${error.message}</p>`;
         }
     } finally {
         if (loading) {
+            console.log('loadMembersDirectly: Hiding loading');
             loading.style.display = 'none';
         }
     }
@@ -559,8 +706,10 @@ async function loadMemberProfileDirectly(memberId) {
         // Initialize DOM elements after creating HTML
         initializeDOMElements();
         
-        if (loading) {
-            loading.style.display = 'block';
+        // Get the loading element from the newly created HTML
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
         }
         
         // Fetch member data
@@ -577,8 +726,9 @@ async function loadMemberProfileDirectly(memberId) {
         // Display member profile
         displayMemberProfile(member);
         
-        if (loading) {
-            loading.style.display = 'none';
+        // Hide loading after successful display
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
         }
         
     } catch (error) {
@@ -591,6 +741,12 @@ async function loadMemberProfileDirectly(memberId) {
                     <button onclick="window.location.href='/miembros'" class="action-btn">Volver a Miembros</button>
                 </div>
             `;
+        }
+        
+        // Hide loading on error as well
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
         }
     }
 }
@@ -612,9 +768,28 @@ function displayMemberProfile(member) {
     console.log('Displaying member profile:', member);
     
     const memberContent = document.getElementById('member-content');
+    const memberTitle = document.getElementById('member-title');
+    
     if (!memberContent) {
         console.error('Member content element not found');
         return;
+    }
+    
+    // Extract member name for the title
+    let memberName = 'Miembro del Club';
+    Object.entries(member.properties).forEach(([name, property]) => {
+        const isNameProperty = name.toLowerCase().includes('name') || 
+                             name.toLowerCase().includes('nombre') || 
+                             name.toLowerCase().includes('title');
+        if (isNameProperty && memberName === 'Miembro del Club') {
+            memberName = extractPropertyValue(property);
+        }
+    });
+    
+    // Update the member title in the header
+    if (memberTitle) {
+        memberTitle.textContent = memberName;
+        console.log('Member title updated to:', memberName);
     }
     
     let profileContent = `
