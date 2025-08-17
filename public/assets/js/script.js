@@ -534,45 +534,60 @@ function extractPropertyValue(property) {
     switch (property.type) {
         case 'title':
             return property.title?.[0]?.plain_text || 'No title';
+            
         case 'rich_text':
             return property.rich_text?.[0]?.plain_text || 'No text';
+            
         case 'number':
-            return property.number || 'No number';
+            return property.number !== null && property.number !== undefined ? property.number : 'No number';
+            
         case 'select':
             return property.select?.name || 'No selection';
+            
         case 'multi_select':
             // Special handling for "Tipo" column - display as tags
             if (property.multi_select && property.multi_select.length > 0) {
                 return property.multi_select.map(s => s.name).join(', ');
             }
             return 'No selections';
+            
         case 'date':
             return property.date ? formatDate(property.date.start) : 'No date';
+            
         case 'checkbox':
             return property.checkbox ? 'Yes' : 'No';
+            
         case 'url':
             return property.url || 'No URL';
+            
         case 'email':
             return property.email || 'No email';
+            
         case 'phone_number':
             return property.phone_number || 'No phone';
+            
         case 'formula':
             // Handle formula properties - they can return different types
             if (property.formula) {
                 switch (property.formula.type) {
                     case 'string':
                         return property.formula.string || 'No formula result';
+                        
                     case 'number':
-                        return property.formula.number || 'No formula result';
+                        return property.formula.number !== null && property.formula.number !== undefined ? property.formula.number : 'No formula result';
+                        
                     case 'boolean':
                         return property.formula.boolean ? 'Yes' : 'No';
+                        
                     case 'date':
                         return property.formula.date ? formatDate(property.formula.date.start) : 'No date';
+                        
                     default:
                         return 'Formula result unavailable';
                 }
             }
             return 'No formula result';
+            
         case 'rollup':
             // Handle rollup properties - they aggregate data from related databases
             if (property.rollup) {
@@ -597,20 +612,24 @@ function extractPropertyValue(property) {
                             return items.join(', ');
                         }
                         return 'No related items';
+                        
                     case 'number':
                         // For number rollups (like sums, counts, etc.)
-                        return property.rollup.number || 'No rollup result';
+                        return property.rollup.number !== null && property.rollup.number !== undefined ? property.rollup.number : 'No rollup result';
+                        
                     case 'date':
                         // For date rollups (like earliest, latest dates)
                         if (property.rollup.date) {
                             return formatDate(property.rollup.date.start);
                         }
                         return 'No date rollup';
+                        
                     default:
                         return 'Rollup data unavailable';
                 }
             }
             return 'No rollup data';
+            
         default:
             return 'Unsupported type';
     }
@@ -821,7 +840,7 @@ function viewMemberProfile(memberId, memberName) {
     loadMemberProfileDirectly(memberId);
 }
 
-// Display member profile with all data
+// Display member profile with specific data only
 function displayMemberProfile(member) {
     console.log('Displaying member profile:', member);
     
@@ -850,6 +869,17 @@ function displayMemberProfile(member) {
         console.log('Member title updated to:', memberName);
     }
     
+    // Define the specific fields to display with their display names
+    const fieldsToDisplay = [
+        { key: 'name', displayName: 'Nombre', propertyNames: ['Name', 'Nombre', 'Title'] },
+        { key: 'memberType', displayName: 'Tipo de miembro', propertyNames: ['Tipo', 'Type', 'Category', 'Tipo de miembro'] },
+        { key: 'bloodType', displayName: 'Tipo de sangre', propertyNames: ['Tipo de sangre', 'Blood Type', 'Grupo sanguíneo'] },
+        { key: 'joinDate', displayName: 'Fecha de ingreso', propertyNames: ['Fecha de ingreso', 'Join Date', 'Fecha de afiliación'] },
+        { key: 'motorcycle', displayName: 'Moto', propertyNames: ['Moto', 'Motorcycle', 'Motocicleta'] },
+        { key: 'totalKm', displayName: 'Total kilómetros recorridos', propertyNames: ['Total kilómetros recorridos', 'Total KM', 'Kilómetros totales'] },
+        { key: 'participatedRoutes', displayName: 'Rutas participadas', propertyNames: ['Rutas participadas', 'Participated Routes', 'Rutas'] }
+    ];
+    
     let profileContent = `
         <div class="member-profile-content">
             <div class="profile-section">
@@ -857,37 +887,59 @@ function displayMemberProfile(member) {
                 <div class="profile-grid">
     `;
     
-    // Display all member properties in a grid
-    Object.entries(member.properties).forEach(([name, property]) => {
-        const value = extractPropertyValue(property);
-        const isNameProperty = name.toLowerCase().includes('name') || 
-                             name.toLowerCase().includes('nombre') || 
-                             name.toLowerCase().includes('title');
+    // Display only the specific fields
+    fieldsToDisplay.forEach(field => {
+        let value = 'No disponible';
+        let propertyFound = null;
         
-        if (isNameProperty) {
-            // Name property gets special styling
+        // Find the property in member properties
+        for (const propertyName of field.propertyNames) {
+            if (member.properties[propertyName]) {
+                propertyFound = member.properties[propertyName];
+                break;
+            }
+        }
+        
+        if (propertyFound) {
+            value = extractPropertyValue(propertyFound);
+        } else {
+            console.warn(`No property found for field "${field.key}". Available properties:`, Object.keys(member.properties));
+        }
+        
+        // Special styling for name field
+        if (field.key === 'name') {
             profileContent += `
                 <div class="profile-item name-item">
-                    <div class="profile-label">${escapeHtml(name)}</div>
+                    <div class="profile-label">${field.displayName}</div>
                     <div class="profile-value name-value">${escapeHtml(value)}</div>
                 </div>
             `;
-        } else if (property.type === 'multi_select') {
-            // Multi-select properties get tag styling
-            const tags = property.multi_select || [];
+        } else if (field.key === 'memberType') {
+            // Member type gets special styling with badge
+            profileContent += `
+                <div class="profile-item">
+                    <div class="profile-label">${field.displayName}</div>
+                    <div class="profile-value member-type-value">
+                        <span class="member-type-badge">${escapeHtml(value)}</span>
+                    </div>
+                </div>
+            `;
+        } else if (field.key === 'participatedRoutes' && propertyFound && propertyFound.type === 'multi_select') {
+            // Routes get tag styling
+            const tags = propertyFound.multi_select || [];
             if (tags.length > 0) {
                 const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
                 profileContent += `
                     <div class="profile-item">
-                        <div class="profile-label">${escapeHtml(name)}</div>
+                        <div class="profile-label">${field.displayName}</div>
                         <div class="profile-value tags-value">${tagsHtml}</div>
                     </div>
                 `;
             } else {
                 profileContent += `
                     <div class="profile-item">
-                        <div class="profile-label">${escapeHtml(name)}</div>
-                        <div class="profile-value">No seleccionado</div>
+                        <div class="profile-label">${field.displayName}</div>
+                        <div class="profile-value">No hay rutas registradas</div>
                     </div>
                 `;
             }
@@ -895,7 +947,7 @@ function displayMemberProfile(member) {
             // Regular properties
             profileContent += `
                 <div class="profile-item">
-                    <div class="profile-label">${escapeHtml(name)}</div>
+                    <div class="profile-label">${field.displayName}</div>
                     <div class="profile-value">${escapeHtml(value)}</div>
                 </div>
             `;

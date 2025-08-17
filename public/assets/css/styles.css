@@ -770,10 +770,37 @@ body {
     color: #1a4d2e;
 }
 
+.profile-value.member-type-value {
+    display: flex;
+    align-items: center;
+}
+
+.profile-value.member-type-value .member-type-badge {
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(26, 77, 46, 0.3);
+}
+
 .profile-value.tags-value {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+.profile-value.tags-value .tag {
+    background: #e8f5e8;
+    color: #1a4d2e;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid #4a7c59;
 }
 
 .profile-actions {
