@@ -841,7 +841,7 @@ function viewMemberProfile(memberId, memberName) {
 }
 
 // Display member profile with specific data only
-function displayMemberProfile(member) {
+async function displayMemberProfile(member) {
     console.log('Displaying member profile:', member);
     
     const memberContent = document.getElementById('member-content');
@@ -958,6 +958,16 @@ function displayMemberProfile(member) {
                 </div>
             </div>
             
+            <!-- Achievements Section -->
+            <div class="profile-section achievements-section">
+                <h3><span class="material-symbols-outlined">emoji_events</span> Logros del Miembro</h3>
+                <div class="achievements-container">
+                    <div class="achievements-loading">
+                        <p>Cargando logros...</p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="profile-actions">
                 <button class="action-btn" onclick="window.location.href='/miembros'">
                     ← Volver a Miembros
@@ -966,8 +976,217 @@ function displayMemberProfile(member) {
         </div>
     `;
     
+    // Set the initial content with loading state
     memberContent.innerHTML = profileContent;
-    console.log('Member profile displayed successfully');
+    
+    // Handle achievements separately - they get their own section with individual cards
+    // Look for the Logros property directly in member properties
+    let achievementsProperty = null;
+    const logrosPropertyNames = ['Logros', 'Achievements', 'Conquistas'];
+    
+    for (const propertyName of logrosPropertyNames) {
+        if (member.properties[propertyName]) {
+            achievementsProperty = member.properties[propertyName];
+            console.log('Found achievements property:', propertyName, achievementsProperty);
+            break;
+        }
+    }
+    
+    if (achievementsProperty && achievementsProperty.type === 'relation' && achievementsProperty.relation && achievementsProperty.relation.length > 0) {
+        console.log('Found relation achievements:', achievementsProperty.relation);
+        
+        // Load achievements data for each relation ID and update the content
+        const achievementsHTML = await loadAchievementsData(achievementsProperty.relation, memberContent);
+        
+        // Find the achievements container and replace loading state with actual content
+        const achievementsContainer = memberContent.querySelector('.achievements-container');
+        if (achievementsContainer) {
+            achievementsContainer.innerHTML = achievementsHTML;
+            console.log('Achievements container updated with content');
+        } else {
+            console.error('Achievements container not found after setting content');
+        }
+    } else {
+        console.log('No achievements found or not relation type:', achievementsProperty);
+        const achievementsContainer = memberContent.querySelector('.achievements-container');
+        if (achievementsContainer) {
+            achievementsContainer.innerHTML = `
+                <div class="no-achievements">
+                    <p>Este miembro aún no ha obtenido logros.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Load achievements data for relation IDs and return HTML content
+async function loadAchievementsData(relationArray, memberContent) {
+    try {
+        console.log('loadAchievementsData: Starting with relations:', relationArray);
+        
+        // Fetch each achievement by ID
+        console.log('loadAchievementsData: Starting to fetch achievements...');
+        const achievementPromises = relationArray.map(async (relation, index) => {
+            try {
+                console.log(`loadAchievementsData: Fetching achievement ${index + 1}/${relationArray.length} with ID:`, relation.id);
+                const response = await fetch(`/api/logros/${relation.id}`);
+                
+                console.log(`loadAchievementsData: Response for achievement ${relation.id}:`, response);
+                
+                if (!response.ok) {
+                    console.warn(`loadAchievementsData: Failed to fetch achievement ${relation.id}:`, response.status, response.statusText);
+                    return null;
+                }
+                
+                const achievement = await response.json();
+                console.log(`loadAchievementsData: Achievement data received for ${relation.id}:`, achievement);
+                return achievement;
+            } catch (error) {
+                console.error(`loadAchievementsData: Error fetching achievement ${relation.id}:`, error);
+                return null;
+            }
+        });
+        
+        console.log('loadAchievementsData: All achievement promises created, waiting for results...');
+        
+        // Wait for all achievements to load
+        const achievements = await Promise.all(achievementPromises);
+        const validAchievements = achievements.filter(achievement => achievement !== null);
+        
+        console.log('loadAchievementsData: All achievements processed:', achievements);
+        console.log('loadAchievementsData: Valid achievements:', validAchievements);
+        
+        if (validAchievements.length > 0) {
+            console.log('loadAchievementsData: Creating achievement cards HTML...');
+            // Create HTML for each achievement card
+            const achievementsHTML = validAchievements.map((achievement, index) => {
+                console.log(`loadAchievementsData: Creating card ${index + 1} for achievement:`, achievement);
+                return createAchievementCardHTML(achievement);
+            }).join('');
+            
+            console.log('loadAchievementsData: Achievements HTML created:', achievementsHTML);
+            return achievementsHTML;
+        } else {
+            console.log('loadAchievementsData: No valid achievements to display');
+            return `
+                <div class="no-achievements">
+                    <p>No se pudieron cargar los logros.</p>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('loadAchievementsData: Error in main function:', error);
+        return `
+            <div class="no-achievements">
+                <p>Error al cargar los logros: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// Create an achievement card element
+function createAchievementCard(achievement) {
+    console.log('createAchievementCard: Creating card for achievement:', achievement);
+    
+    const card = document.createElement('div');
+    card.className = 'achievement-card';
+    console.log('createAchievementCard: Card element created with class:', card.className);
+    
+    // Extract achievement title from properties
+    let title = 'Logro sin título';
+    if (achievement.properties) {
+        console.log('createAchievementCard: Achievement properties:', achievement.properties);
+        // Look for title properties
+        const titleProperty = achievement.properties.Name || achievement.properties.Nombre || achievement.properties.Title;
+        if (titleProperty) {
+            title = extractPropertyValue(titleProperty);
+            console.log('createAchievementCard: Extracted title:', title);
+        } else {
+            console.log('createAchievementCard: No title property found');
+        }
+    } else {
+        console.log('createAchievementCard: No properties found in achievement');
+    }
+    
+    // Extract achievement description if available
+    let description = 'Logro obtenido por el miembro';
+    if (achievement.properties) {
+        const descProperty = achievement.properties.Descripción || achievement.properties.Description || achievement.properties.Detalles;
+        if (descProperty) {
+            description = extractPropertyValue(descProperty);
+            console.log('createAchievementCard: Extracted description:', description);
+        } else {
+            console.log('createAchievementCard: No description property found');
+        }
+    }
+    
+    const cardHTML = `
+        <div class="achievement-header">
+            <span class="achievement-icon">🏆</span>
+            <h4 class="achievement-title">${escapeHtml(title)}</h4>
+        </div>
+        <div class="achievement-content">
+            <p class="achievement-description">${escapeHtml(description)}</p>
+        </div>
+    `;
+    
+    console.log('createAchievementCard: Card HTML created:', cardHTML);
+    card.innerHTML = cardHTML;
+    
+    console.log('createAchievementCard: Card element created:', card);
+    console.log('createAchievementCard: Card innerHTML:', card.innerHTML);
+    console.log('createAchievementCard: Card outerHTML:', card.outerHTML);
+    
+    return card;
+}
+
+// Create an achievement card HTML string
+function createAchievementCardHTML(achievement) {
+    console.log('createAchievementCardHTML: Creating HTML for achievement:', achievement);
+    
+    // Extract achievement title from properties
+    let title = 'Logro sin título';
+    if (achievement.properties) {
+        console.log('createAchievementCardHTML: Achievement properties:', achievement.properties);
+        // Look for title properties
+        const titleProperty = achievement.properties.Name || achievement.properties.Nombre || achievement.properties.Title;
+        if (titleProperty) {
+            title = extractPropertyValue(titleProperty);
+            console.log('createAchievementCardHTML: Extracted title:', title);
+        } else {
+            console.log('createAchievementCardHTML: No title property found');
+        }
+    } else {
+        console.log('createAchievementCardHTML: No properties found in achievement');
+    }
+    
+    // Extract achievement description if available
+    let description = 'Logro obtenido por el miembro';
+    if (achievement.properties) {
+        const descProperty = achievement.properties.Descripción || achievement.properties.Description || achievement.properties.Detalles;
+        if (descProperty) {
+            description = extractPropertyValue(descProperty);
+            console.log('createAchievementCardHTML: Extracted description:', description);
+        } else {
+            console.log('createAchievementCardHTML: No description property found');
+        }
+    }
+    
+    const cardHTML = `
+        <div class="achievement-card">
+            <div class="achievement-header">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <h4 class="achievement-title">${escapeHtml(title)}</h4>
+            </div>
+            <div class="achievement-content">
+                <p class="achievement-description">${escapeHtml(description)}</p>
+            </div>
+        </div>
+    `;
+    
+    console.log('createAchievementCardHTML: HTML created:', cardHTML);
+    return cardHTML;
 }
 
 // Utility functions

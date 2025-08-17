@@ -23,6 +23,18 @@ const CLUB_DATABASES = {
 };
 
 // Routes
+app.get('/api/test-simple', (req, res) => {
+  res.json({ message: 'Simple test endpoint working!' });
+});
+
+app.get('/api/test-dynamic/:id', (req, res) => {
+  res.json({ 
+    message: 'Dynamic route working!', 
+    id: req.params.id,
+    url: req.url 
+  });
+});
+
 app.get('/api/databases', async (req, res) => {
   try {
     const databases = [];
@@ -119,6 +131,53 @@ app.get('/api/logros', async (req, res) => {
   }
 });
 
+// API route for individual achievement
+app.get('/api/logros/:id', async (req, res) => {
+  try {
+    const achievementId = req.params.id;
+    console.log('=== ACHIEVEMENT ENDPOINT CALLED ===');
+    console.log('Fetching individual achievement with ID:', achievementId);
+    console.log('Request params:', req.params);
+    console.log('Request URL:', req.url);
+    
+    const response = await notion.pages.retrieve({
+      page_id: achievementId
+    });
+    
+    console.log('Achievement retrieved successfully from Notion API');
+    console.log('Achievement data structure:', {
+      id: response.id,
+      object: response.object,
+      hasProperties: !!response.properties,
+      propertiesCount: response.properties ? Object.keys(response.properties).length : 0
+    });
+    
+    res.json(response);
+  } catch (error) {
+    console.error('=== ERROR IN ACHIEVEMENT ENDPOINT ===');
+    console.error('Error fetching achievement:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    res.status(500).json({ error: 'Error fetching achievement data', details: error.message });
+  }
+});
+
+// Test route to verify server is working
+app.get('/api/test', (req, res) => {
+  console.log('=== TEST ENDPOINT CALLED ===');
+  res.json({ 
+    message: 'Server is working!', 
+    timestamp: new Date().toISOString(),
+    availableRoutes: [
+      '/api/databases',
+      '/api/logros',
+      '/api/logros/:id',
+      '/api/miembros',
+      '/api/miembros/:id'
+    ]
+  });
+});
+
 // API route for members database
 app.get('/api/miembros', async (req, res) => {
     try {
@@ -204,4 +263,19 @@ app.listen(PORT, () => {
   console.log(`Club databases configured:`);
   console.log(`- Members: ${CLUB_DATABASES.members}`);
   console.log(`- Achievements: ${CLUB_DATABASES.achievements}`);
+  
+  // Log all registered routes
+  console.log('\n=== REGISTERED ROUTES ===');
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      console.log(`${Object.keys(middleware.route.methods).join(',').toUpperCase()} ${middleware.route.path}`);
+    } else if (middleware.name === 'router') {
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          console.log(`${Object.keys(handler.route.methods).join(',').toUpperCase()} ${handler.route.path}`);
+        }
+      });
+    }
+  });
+  console.log('=== END ROUTES ===\n');
 }); 
