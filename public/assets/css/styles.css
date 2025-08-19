@@ -5,6 +5,14 @@
     box-sizing: border-box;
 }
 
+/* CSS Custom Properties (Variables) */
+:root {
+    --rt-primary-color: #082d28;
+    --rt-secondary-color: #2d4203;
+    --rt-brown-color: #4e2815;
+    --rt-orange-color: #d27028;
+}
+
 /* Material Symbols styles */
 .material-symbols-outlined {
     font-variation-settings:
@@ -31,7 +39,7 @@ body {
 
 /* Header Styles */
 .main-header {
-    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    background: linear-gradient(135deg, var(--rt-primary-color) 0%, #000000 100%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     padding: 25px 30px;
     margin: 30px 0 30px 0;
@@ -99,7 +107,7 @@ body {
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: rgba(26, 77, 46, 0.9);
+    background: var(--rt-secondary-color);
     color: #ffffff;
     text-decoration: none;
     border-radius: 25px;
@@ -283,6 +291,7 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: var( --rt-secondary-color );
 }
 
 .database-card h3 {
@@ -420,7 +429,7 @@ body {
 }
 
 .back-btn {
-    background: #667eea;
+    background: var( --rt-secondary-color );
     color: white;
     border: none;
     padding: 10px 20px;
@@ -431,7 +440,7 @@ body {
 }
 
 .back-btn:hover {
-    background: #5a6fd8;
+    background: var( --rt-primary-color );
 }
 
 #database-title {
@@ -566,7 +575,7 @@ body {
 }
 
 .achievements-table thead {
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: var( --rt-secondary-color );
     color: white;
 }
 
@@ -584,6 +593,10 @@ body {
     background: rgba(255,255,255,0.1);
     font-weight: 700;
     min-width: 200px;
+}
+
+.achievements-table td.name-column {
+    font-weight: 700;
 }
 
 .achievements-table tbody tr {
@@ -623,7 +636,7 @@ body {
 
 .tag {
     display: inline-block;
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: var( --rt-secondary-color );
     color: white;
     padding: 4px 8px;
     margin: 2px;
@@ -758,7 +771,7 @@ body {
 }
 
 .item-card.members.clickable .member-type-badge {
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: var( --rt-orange-color );
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
@@ -881,7 +894,7 @@ body {
 }
 
 .profile-value.member-type-value .member-type-badge {
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: var( --rt-orange-color );
     color: white;
     padding: 6px 12px;
     border-radius: 15px;
@@ -1102,7 +1115,7 @@ body {
 }
 
 .action-btn {
-    background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+    background: var( --rt-secondary-color );
     color: white;
     border: none;
     padding: 12px 24px;
