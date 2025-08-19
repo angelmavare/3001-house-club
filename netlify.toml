@@ -16,5 +16,17 @@
   to = "/index.html"
   status = 200
 
+# Serve favicon and manifest files
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/site.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=86400"
+
 [functions]
   node_bundler = "esbuild" 

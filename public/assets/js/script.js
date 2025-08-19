@@ -349,9 +349,9 @@ function displayAchievementsTable(items, properties) {
     // Get property names for table headers
     const propertyNames = Object.keys(properties);
     
-    if (propertyNames.length === 0) {
-        return '<p class="no-items">No se encontraron propiedades para mostrar en la tabla.</p>';
-    }
+    // if (propertyNames.length === 0) {
+    //     return '<p class="no-items">No se encontraron propiedades para mostrar en la tabla.</p>';
+    // }
     
     let tableContent = `
         <div class="table-container">
