@@ -339,6 +339,86 @@ body {
     gap: 20px;
 }
 
+/* Mobile layout for detail header */
+@media (max-width: 768px) {
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .back-btn {
+        order: -1; /* Move back button to top */
+        align-self: flex-start;
+        margin-bottom: 10px;
+    }
+    
+    #database-title {
+        font-size: 1.5rem; /* Slightly smaller title on mobile */
+        line-height: 1.2;
+    }
+}
+
+/* Mobile layout for profile header (member profiles) */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .profile-header .back-btn {
+        order: -1; /* Move back button to top */
+        align-self: flex-start;
+        margin-bottom: 10px;
+    }
+    
+    .profile-header h2 {
+        font-size: 1.5rem; /* Slightly smaller title on mobile */
+        line-height: 1.2;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .detail-header {
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .back-btn {
+        width: 100%; /* Full width button on very small screens */
+        text-align: center;
+        padding: 12px 20px; /* Slightly larger padding for touch */
+        font-size: 0.95rem;
+    }
+    
+    #database-title {
+        font-size: 1.4rem;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Profile header styles for very small screens */
+    .profile-header {
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .profile-header .back-btn {
+        width: 100%; /* Full width button on very small screens */
+        text-align: center;
+        padding: 12px 20px; /* Slightly larger padding for touch */
+        font-size: 0.95rem;
+    }
+    
+    .profile-header h2 {
+        font-size: 1.4rem;
+        text-align: center;
+        width: 100%;
+    }
+}
+
 .back-btn {
     background: #667eea;
     color: white;
@@ -1037,4 +1117,27 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(26, 77, 46, 0.4);
     background: linear-gradient(135deg, #2d5a3d 0%, #3d6b4a 100%);
+}
+
+/* Mobile styles for action buttons */
+@media (max-width: 768px) {
+    .profile-actions {
+        padding-top: 25px;
+        margin-top: 20px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        max-width: 300px;
+        padding: 15px 24px;
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .action-btn {
+        padding: 16px 20px;
+        font-size: 1rem;
+        border-radius: 20px;
+    }
 } 
