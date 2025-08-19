@@ -917,7 +917,7 @@ async function loadMemberProfileDirectly(memberId) {
             <div id="member-profile" class="member-profile">
                 <div class="profile-header">
                     <button id="back-btn" class="back-btn">← Volver a Miembros</button>
-                    <h2 id="member-title">Cargando perfil...</h2>
+                    <h2 id="member-title"><span id="member-title-text">Cargando perfil...</span></h2>
                 </div>
                 <div id="loading" class="loading">Cargando perfil del miembro...</div>
                 <div id="member-content"></div>
@@ -992,7 +992,7 @@ async function displayMemberProfile(member) {
     console.log('Displaying member profile:', member);
     
     const memberContent = document.getElementById('member-content');
-    const memberTitle = document.getElementById('member-title');
+    const memberTitle = document.getElementById('member-title-text');
     
     if (!memberContent) {
         console.error('Member content element not found');
