@@ -314,6 +314,8 @@ function displayDatabaseDetail(database) {
             if (database.type === 'achievements') {
                 // Display achievements as a table
                 console.log('displayDatabaseDetail: Displaying achievements table');
+                console.log('displayDatabaseDetail: Database properties for achievements:', database.properties);
+                console.log('displayDatabaseDetail: Number of achievement items:', database.items.length);
                 content += displayAchievementsTable(database.items, database.properties || {});
             } else {
                 // Display members in the current card format
@@ -340,6 +342,9 @@ function displayDatabaseDetail(database) {
 
 // Display achievements as a table
 function displayAchievementsTable(items, properties) {
+    console.log('displayAchievementsTable: Starting with items:', items);
+    console.log('displayAchievementsTable: Properties received:', properties);
+    
     // Safety check for properties
     if (!properties || typeof properties !== 'object') {
         console.warn('displayAchievementsTable: No properties provided, using empty object');
@@ -348,10 +353,81 @@ function displayAchievementsTable(items, properties) {
     
     // Get property names for table headers
     const propertyNames = Object.keys(properties);
+    console.log('displayAchievementsTable: Property names found:', propertyNames);
     
-    // if (propertyNames.length === 0) {
-    //     return '<p class="no-items">No se encontraron propiedades para mostrar en la tabla.</p>';
-    // }
+    // If no properties defined, create a fallback table structure
+    if (propertyNames.length === 0) {
+        console.log('displayAchievementsTable: No properties defined, creating fallback table');
+        console.log('displayAchievementsTable: Number of items to display:', items.length);
+        
+        let fallbackTable = `
+            <div class="table-container">
+                <table class="achievements-table">
+                    <thead>
+                        <tr>
+                            <th class="name-column">Logro</th>
+                            <th>Descripción</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        // Display achievements with fallback structure
+        items.forEach(item => {
+            fallbackTable += '<tr>';
+            
+            // Try to extract name from common property names
+            let achievementName = 'Logro sin título';
+            let achievementDescription = 'Sin descripción';
+            let achievementDate = 'Sin fecha';
+            
+            if (item.properties) {
+                // Look for name properties
+                const nameProps = ['Name', 'Nombre', 'Title', 'Título', 'Logro'];
+                for (const propName of nameProps) {
+                    if (item.properties[propName]) {
+                        achievementName = extractPropertyValue(item.properties[propName]);
+                        break;
+                    }
+                }
+                
+                // Look for description properties
+                const descProps = ['Descripción', 'Description', 'Detalles', 'Details'];
+                for (const propName of descProps) {
+                    if (item.properties[propName]) {
+                        achievementDescription = extractPropertyValue(item.properties[propName]);
+                        break;
+                    }
+                }
+                
+                // Look for date properties
+                const dateProps = ['Fecha', 'Date', 'Fecha de creación', 'Created'];
+                for (const propName of dateProps) {
+                    if (item.properties[propName]) {
+                        achievementDate = extractPropertyValue(item.properties[propName]);
+                        break;
+                    }
+                }
+            }
+            
+            fallbackTable += `
+                <td class="name-cell">${escapeHtml(achievementName)}</td>
+                <td>${escapeHtml(achievementDescription)}</td>
+                <td>${escapeHtml(achievementDate)}</td>
+            `;
+            
+            fallbackTable += '</tr>';
+        });
+        
+        fallbackTable += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        return fallbackTable;
+    }
     
     let tableContent = `
         <div class="table-container">
