@@ -365,9 +365,10 @@ function displayAchievementsTable(items, properties) {
                 <table class="achievements-table">
                     <thead>
                         <tr>
-                            <th class="name-column">Logro</th>
+                            <th class="name-column">Título</th>
                             <th>Descripción</th>
-                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Dificultad</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -377,14 +378,15 @@ function displayAchievementsTable(items, properties) {
         items.forEach(item => {
             fallbackTable += '<tr>';
             
-            // Try to extract name from common property names
-            let achievementName = 'Logro sin título';
+            // Try to extract data from specific properties
+            let achievementName = 'Sin título';
             let achievementDescription = 'Sin descripción';
-            let achievementDate = 'Sin fecha';
+            let achievementType = 'Sin tipo';
+            let achievementDifficulty = 'Sin dificultad';
             
             if (item.properties) {
-                // Look for name properties
-                const nameProps = ['Name', 'Nombre', 'Title', 'Título', 'Logro'];
+                // Look for name/title properties
+                const nameProps = ['Name', 'Nombre', 'Title', 'Título'];
                 for (const propName of nameProps) {
                     if (item.properties[propName]) {
                         achievementName = extractPropertyValue(item.properties[propName]);
@@ -401,11 +403,31 @@ function displayAchievementsTable(items, properties) {
                     }
                 }
                 
-                // Look for date properties
-                const dateProps = ['Fecha', 'Date', 'Fecha de creación', 'Created'];
-                for (const propName of dateProps) {
+                // Look for type properties (multi-select)
+                const typeProps = ['Tipo', 'Type', 'Category', 'Categoría'];
+                for (const propName of typeProps) {
                     if (item.properties[propName]) {
-                        achievementDate = extractPropertyValue(item.properties[propName]);
+                        const typeProperty = item.properties[propName];
+                        if (typeProperty.type === 'multi_select' && typeProperty.multi_select) {
+                            // Display as tags
+                            const tags = typeProperty.multi_select;
+                            if (tags.length > 0) {
+                                achievementType = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
+                            } else {
+                                achievementType = 'Sin tags';
+                            }
+                        } else {
+                            achievementType = extractPropertyValue(typeProperty);
+                        }
+                        break;
+                    }
+                }
+                
+                // Look for difficulty properties
+                const difficultyProps = ['Dificultad', 'Difficulty', 'Nivel', 'Level'];
+                for (const propName of difficultyProps) {
+                    if (item.properties[propName]) {
+                        achievementDifficulty = extractPropertyValue(item.properties[propName]);
                         break;
                     }
                 }
@@ -414,7 +436,8 @@ function displayAchievementsTable(items, properties) {
             fallbackTable += `
                 <td class="name-cell">${escapeHtml(achievementName)}</td>
                 <td>${escapeHtml(achievementDescription)}</td>
-                <td>${escapeHtml(achievementDate)}</td>
+                <td class="tags-cell">${achievementType}</td>
+                <td>${escapeHtml(achievementDifficulty)}</td>
             `;
             
             fallbackTable += '</tr>';
@@ -436,27 +459,32 @@ function displayAchievementsTable(items, properties) {
                     <tr>
     `;
     
-    // Create table headers
-    propertyNames.forEach(propName => {
-        const isNameColumn = propName.toLowerCase().includes('name') || 
-                           propName.toLowerCase().includes('nombre') ||
-                           propName.toLowerCase().includes('title') ||
-                           propName.toLowerCase().includes('título');
-        
-        if (isNameColumn) {
-            // Name column first
-            tableContent += `<th class="name-column">${escapeHtml(propName)}</th>`;
+    // Define priority columns in order
+    const priorityColumns = [
+        { names: ['Name', 'Nombre', 'Title', 'Título'], label: 'Título', class: 'name-column' },
+        { names: ['Descripción', 'Description', 'Detalles', 'Details'], label: 'Descripción', class: '' },
+        { names: ['Tipo', 'Type', 'Category', 'Categoría'], label: 'Tipo', class: 'tags-column' },
+        { names: ['Dificultad', 'Difficulty', 'Nivel', 'Level'], label: 'Dificultad', class: '' }
+    ];
+    
+    // Add priority columns first
+    priorityColumns.forEach(priorityCol => {
+        const foundProperty = propertyNames.find(propName => 
+            priorityCol.names.some(name => propName.toLowerCase() === name.toLowerCase())
+        );
+        if (foundProperty) {
+            const className = priorityCol.class ? ` class="${priorityCol.class}"` : '';
+            tableContent += `<th${className}>${priorityCol.label}</th>`;
         }
     });
     
-    // Add other columns
+    // Add remaining columns
     propertyNames.forEach(propName => {
-        const isNameColumn = propName.toLowerCase().includes('name') || 
-                           propName.toLowerCase().includes('nombre') ||
-                           propName.toLowerCase().includes('title') ||
-                           propName.toLowerCase().includes('título');
+        const isPriorityColumn = priorityColumns.some(priorityCol => 
+            priorityCol.names.some(name => propName.toLowerCase() === name.toLowerCase())
+        );
         
-        if (!isNameColumn) {
+        if (!isPriorityColumn) {
             tableContent += `<th>${escapeHtml(propName)}</th>`;
         }
     });
@@ -471,44 +499,48 @@ function displayAchievementsTable(items, properties) {
     items.forEach(item => {
         tableContent += '<tr>';
         
-        // Add name column first
-        propertyNames.forEach(propName => {
-            const isNameColumn = propName.toLowerCase().includes('name') || 
-                               propName.toLowerCase().includes('nombre') ||
-                               propName.toLowerCase().includes('title') ||
-                               propName.toLowerCase().includes('título');
+        // Add priority columns first in the same order
+        priorityColumns.forEach(priorityCol => {
+            const foundProperty = propertyNames.find(propName => 
+                priorityCol.names.some(name => propName.toLowerCase() === name.toLowerCase())
+            );
             
-            if (isNameColumn) {
-                const value = extractPropertyValue(item.properties[propName]);
-                tableContent += `<td class="name-cell">${escapeHtml(value)}</td>`;
+            if (foundProperty) {
+                const property = item.properties[foundProperty];
+                if (property) {
+                    if (priorityCol.label === 'Tipo' && property.type === 'multi_select') {
+                        // Display Tipo column as tags
+                        const tags = property.multi_select || [];
+                        if (tags.length > 0) {
+                            const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
+                            tableContent += `<td class="tags-cell">${tagsHtml}</td>`;
+                        } else {
+                            tableContent += `<td class="tags-cell">Sin tags</td>`;
+                        }
+                    } else {
+                        const value = extractPropertyValue(property);
+                        const className = priorityCol.class ? ` class="${priorityCol.class}"` : '';
+                        tableContent += `<td${className}>${escapeHtml(value)}</td>`;
+                    }
+                } else {
+                    tableContent += `<td>No disponible</td>`;
+                }
             }
         });
         
-        // Add other columns
+        // Add remaining columns
         propertyNames.forEach(propName => {
-            const isNameColumn = propName.toLowerCase().includes('name') || 
-                               propName.toLowerCase().includes('nombre') ||
-                               propName.toLowerCase().includes('title') ||
-                               propName.toLowerCase().includes('título');
+            const isPriorityColumn = priorityColumns.some(priorityCol => 
+                priorityCol.names.some(name => propName.toLowerCase() === name.toLowerCase())
+            );
             
-            if (!isNameColumn) {
-                const isTipoColumn = propName.toLowerCase().includes('tipo') || 
-                                   propName.toLowerCase().includes('type') ||
-                                   propName.toLowerCase().includes('category') ||
-                                   propName.toLowerCase().includes('categoría');
-                
-                if (isTipoColumn && item.properties[propName]?.type === 'multi_select') {
-                    // Display Tipo column as tags
-                    const tags = item.properties[propName].multi_select || [];
-                    if (tags.length > 0) {
-                        const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
-                        tableContent += `<td class="tags-cell">${tagsHtml}</td>`;
-                    } else {
-                        tableContent += `<td class="tags-cell">No tags</td>`;
-                    }
-                } else {
-                    const value = extractPropertyValue(item.properties[propName]);
+            if (!isPriorityColumn) {
+                const property = item.properties[propName];
+                if (property) {
+                    const value = extractPropertyValue(property);
                     tableContent += `<td>${escapeHtml(value)}</td>`;
+                } else {
+                    tableContent += `<td>No disponible</td>`;
                 }
             }
         });
