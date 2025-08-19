@@ -128,6 +128,9 @@ async function loadDatabases() {
         
         console.log('Displaying databases...');
         displayDatabases(databases);
+        
+        // Update active navigation for home page
+        updateActiveNavigation('/');
     } catch (error) {
         console.error('Error loading databases:', error);
         if (databasesContainer) {
@@ -147,8 +150,11 @@ function displayDatabases(databases) {
         const typeIcon = db.type === 'achievements' ? '<span class="material-symbols-outlined">emoji_events</span>' : '<span class="material-symbols-outlined">group</span>';
         const typeLabel = db.type === 'achievements' ? 'Logros' : 'Miembros';
         
+        // Determine the route based on database type
+        const route = db.type === 'achievements' ? '/logros' : '/miembros';
+        
         return `
-            <div class="database-card ${db.type}" onclick="viewDatabase('${db.id}')">
+            <div class="database-card ${db.type}" onclick="navigateToRoute('${route}')">
                 <div class="card-header">
                     <span class="type-icon">${typeIcon}</span>
                     <span class="type-label">${typeLabel}</span>
@@ -162,6 +168,28 @@ function displayDatabases(databases) {
             </div>
         `;
     }).join('');
+}
+
+// Navigate to specific route
+function navigateToRoute(route) {
+    console.log('Navigating to route:', route);
+    
+    // Update URL
+    window.history.pushState({ route }, '', route);
+    
+    // Update active navigation
+    updateActiveNavigation(route);
+    
+    // Load the appropriate content based on route
+    if (route === '/logros') {
+        console.log('Loading achievements view...');
+        loadAchievementsDirectly();
+    } else if (route === '/miembros') {
+        console.log('Loading members view...');
+        loadMembersDirectly();
+    } else {
+        console.warn('Unknown route:', route);
+    }
 }
 
 // View a specific database
@@ -244,8 +272,8 @@ function displayDatabaseDetail(database) {
         </div>
     `;
     
-    // Only show properties section if properties exist
-    if (database.properties && typeof database.properties === 'object') {
+    // Only show properties section if properties exist and NOT for achievements database
+    if (database.properties && typeof database.properties === 'object' && database.type !== 'achievements') {
         content += `
             <div class="database-properties">
                 <h3>Estructura de la Base de Datos</h3>
@@ -266,6 +294,8 @@ function displayDatabaseDetail(database) {
                 </div>
             </div>
         `;
+    } else if (database.type === 'achievements') {
+        console.log('displayDatabaseDetail: Skipping properties section for achievements database');
     } else {
         console.warn('displayDatabaseDetail: No properties found in database');
     }
@@ -676,6 +706,9 @@ async function loadAchievementsDirectly() {
         databaseTitle.textContent = database.title;
         displayDatabaseDetail(database);
         
+        // Update active navigation
+        updateActiveNavigation('/logros');
+        
     } catch (error) {
         console.error('Error loading achievements:', error);
         if (databaseContent) {
@@ -749,6 +782,9 @@ async function loadMembersDirectly() {
         console.log('loadMembersDirectly: Calling displayDatabaseDetail...');
         displayDatabaseDetail(database);
         
+        // Update active navigation
+        updateActiveNavigation('/miembros');
+        
     } catch (error) {
         console.error('loadMembersDirectly: Error loading members:', error);
         if (databaseContent) {
@@ -802,6 +838,9 @@ async function loadMemberProfileDirectly(memberId) {
         
         // Display member profile
         displayMemberProfile(member);
+        
+        // Update active navigation for members section
+        updateActiveNavigation('/miembros');
         
         // Hide loading after successful display
         if (loadingElement) {
