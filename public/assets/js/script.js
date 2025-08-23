@@ -582,7 +582,7 @@ function sortMembersByHierarchy(members) {
             if (!typeProperty) return false;
             
             const memberType = extractPropertyValue(typeProperty);
-            return memberType !== 'Retirado';
+            return memberType !== 'Retirado' && memberType !== 'Support';
         })
         .sort((a, b) => {
             // Get member types
