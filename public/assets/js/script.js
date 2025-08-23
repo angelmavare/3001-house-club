@@ -603,7 +603,7 @@ function sortMembersByHierarchy(members) {
         'Tesorero',
         'Capitan de ruta',
         'Full Patch',
-        'Prospecto',
+        'Prospect',
         'Hangaround',
         'Support'
     ];
