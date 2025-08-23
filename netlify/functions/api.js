@@ -17,7 +17,8 @@ const notion = new Client({
 // Club database IDs
 const CLUB_DATABASES = {
   members: '16d03b7b-0a84-8037-8bf9-fbed98efe753',
-  achievements: '24403b7b-0a84-80ee-9e6d-fe5d8ec10aee'
+  achievements: '24403b7b-0a84-80ee-9e6d-fe5d8ec10aee',
+  routes: '12a03b7b-0a84-818c-94e6-000caef294fe'
 };
 
 // Routes
@@ -75,6 +76,25 @@ app.get('/api/databases', async (req, res) => {
       console.error('Error fetching achievements database:', error);
     }
     
+    // Get routes database info
+    try {
+      const routesDb = await notion.databases.retrieve({ 
+        database_id: CLUB_DATABASES.routes 
+      });
+      
+      databases.push({
+        id: routesDb.id,
+        title: routesDb.title?.[0]?.plain_text || 'Bitácora de Rutas',
+        description: routesDb.description?.[0]?.plain_text || 'Base de datos de bitácora de rutas del club',
+        created_time: routesDb.created_time,
+        last_edited_time: routesDb.last_edited_time,
+        url: routesDb.url,
+        type: 'routes'
+      });
+    } catch (error) {
+      console.error('Error fetching routes database:', error);
+    }
+    
     res.json(databases);
   } catch (error) {
     console.error('Error fetching club databases:', error);
@@ -118,6 +138,45 @@ app.get('/api/logros/:id', async (req, res) => {
     } catch (error) {
         console.error('Error fetching achievement:', error);
         res.status(500).json({ error: 'Error fetching achievement data' });
+    }
+});
+
+// API route for routes database
+app.get('/api/rutas', async (req, res) => {
+    try {
+        console.log('Fetching routes database...');
+        const response = await notion.databases.query({
+            database_id: CLUB_DATABASES.routes
+        });
+        
+        console.log(`Found ${response.results.length} routes`);
+        res.json({
+            id: CLUB_DATABASES.routes,
+            title: 'Bitácora de Rutas',
+            type: 'routes',
+            items: response.results
+        });
+    } catch (error) {
+        console.error('Error fetching routes:', error);
+        res.status(500).json({ error: 'Error fetching routes database' });
+    }
+});
+
+// API route for individual route
+app.get('/api/rutas/:id', async (req, res) => {
+    try {
+        const routeId = req.params.id;
+        console.log('Fetching individual route:', routeId);
+        
+        const response = await notion.pages.retrieve({
+            page_id: routeId
+        });
+        
+        console.log('Route retrieved successfully');
+        res.json(response);
+    } catch (error) {
+        console.error('Error fetching route:', error);
+        res.status(500).json({ error: 'Error fetching route data' });
     }
 });
 
@@ -184,7 +243,8 @@ app.get('/api/databases/:id', async (req, res) => {
       title: database.title?.[0]?.plain_text || 'Untitled Database',
       description: database.description?.[0]?.plain_text || '',
       properties: database.properties,
-      type: id === CLUB_DATABASES.members ? 'members' : 'achievements',
+      type: id === CLUB_DATABASES.members ? 'members' : 
+            id === CLUB_DATABASES.achievements ? 'achievements' : 'routes',
       items: response.results.map(item => ({
         id: item.id,
         created_time: item.created_time,
