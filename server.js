@@ -182,17 +182,35 @@ app.get('/api/test', (req, res) => {
 app.get('/api/miembros', async (req, res) => {
     try {
         console.log('Fetching members database...');
+        
+        // First get the database info to include description and properties
+        const database = await notion.databases.retrieve({ 
+            database_id: CLUB_DATABASES.members 
+        });
+        
+        // Then query the database for items
         const response = await notion.databases.query({
-            database_id: CLUB_DATABASES.members
+            database_id: CLUB_DATABASES.members,
+            page_size: 100
         });
         
         console.log(`Found ${response.results.length} members`);
-        res.json({
-            id: CLUB_DATABASES.members,
-            title: 'Miembros',
+        
+        const databaseInfo = {
+            id: database.id,
+            title: database.title?.[0]?.plain_text || 'Miembros del Club',
+            description: database.description?.[0]?.plain_text || '',
+            properties: database.properties,
             type: 'members',
-            items: response.results
-        });
+            items: response.results.map(item => ({
+                id: item.id,
+                created_time: item.created_time,
+                last_edited_time: item.last_edited_time,
+                properties: item.properties
+            }))
+        };
+        
+        res.json(databaseInfo);
     } catch (error) {
         console.error('Error fetching members:', error);
         res.status(500).json({ error: 'Error fetching members database' });

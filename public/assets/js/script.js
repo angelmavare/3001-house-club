@@ -126,6 +126,14 @@ async function loadDatabases() {
             return;
         }
         
+        // Store databases data in localStorage for later use
+        try {
+            localStorage.setItem('clubDatabases', JSON.stringify(databases));
+            console.log('Databases data stored in localStorage');
+        } catch (storageError) {
+            console.warn('Could not store databases in localStorage:', storageError);
+        }
+        
         console.log('Displaying databases...');
         displayDatabases(databases);
         
@@ -168,6 +176,36 @@ function displayDatabases(databases) {
             </div>
         `;
     }).join('');
+}
+
+// Get database description from localStorage
+function getDatabaseDescriptionFromStorage(databaseId) {
+    try {
+        const storedDatabases = localStorage.getItem('clubDatabases');
+        if (storedDatabases) {
+            const databases = JSON.parse(storedDatabases);
+            const database = databases.find(db => db.id === databaseId);
+            return database ? database.description : null;
+        }
+    } catch (error) {
+        console.warn('Error reading from localStorage:', error);
+    }
+    return null;
+}
+
+// Get database description from localStorage by type (for achievements and members)
+function getDatabaseDescriptionByType(databaseType) {
+    try {
+        const storedDatabases = localStorage.getItem('clubDatabases');
+        if (storedDatabases) {
+            const databases = JSON.parse(storedDatabases);
+            const database = databases.find(db => db.type === databaseType);
+            return database ? database.description : null;
+        }
+    } catch (error) {
+        console.warn('Error reading from localStorage:', error);
+    }
+    return null;
 }
 
 // Navigate to specific route
@@ -247,6 +285,7 @@ function displayDatabaseDetail(database) {
     console.log('displayDatabaseDetail: Starting with database:', database);
     console.log('displayDatabaseDetail: databaseTitle element:', databaseTitle);
     console.log('displayDatabaseDetail: databaseContent element:', databaseContent);
+    console.log('database general:', database);
     
     if (!databaseTitle || !databaseContent) {
         console.error('displayDatabaseDetail: Required DOM elements not found!');
@@ -263,42 +302,23 @@ function displayDatabaseDetail(database) {
     console.log('displayDatabaseDetail: Type label:', typeLabel);
     console.log('displayDatabaseDetail: Type description:', typeDescription);
     
+    // Get description from localStorage if not available in database
+    let description = database.description;
+    if (!description && database.type) {
+        description = getDatabaseDescriptionByType(database.type);
+    }
+    
     let content = `
         <div class="database-info">
             <div class="database-type-badge ${database.type}">
                 ${typeLabel}
             </div>
-            <p class="database-description">${escapeHtml(database.description || 'No description available')}</p>
+            <p class="database-description">${escapeHtml(description || 'No description available')}</p>
         </div>
     `;
     
-    // Only show properties section if properties exist and NOT for achievements database
-    if (database.properties && typeof database.properties === 'object' && database.type !== 'achievements') {
-        content += `
-            <div class="database-properties">
-                <h3>Estructura de la Base de Datos</h3>
-                <div class="properties-grid">
-        `;
-        
-        // Display database properties
-        Object.entries(database.properties).forEach(([name, property]) => {
-            content += `
-                <div class="property-item">
-                    <div class="property-name">${escapeHtml(name)}</div>
-                    <div class="property-type">${property.type}</div>
-                </div>
-            `;
-        });
-        
-        content += `
-                </div>
-            </div>
-        `;
-    } else if (database.type === 'achievements') {
-        console.log('displayDatabaseDetail: Skipping properties section for achievements database');
-    } else {
-        console.warn('displayDatabaseDetail: No properties found in database');
-    }
+    // Properties section is now hidden for all database types
+    console.log('displayDatabaseDetail: Properties section hidden for all database types');
     
     // Only show items section if items exist
     if (database.items && Array.isArray(database.items)) {
@@ -319,14 +339,12 @@ function displayDatabaseDetail(database) {
                 content += displayAchievementsTable(database.items, database.properties || {});
             } else {
                 // Display members in the current card format
-                console.log('displayDatabaseDetail: Displaying members cards');
                 content += displayMembersCards(database.items);
             }
         }
         
         content += '</div>';
     } else {
-        console.warn('displayDatabaseDetail: No items found in database');
         content += `
             <div class="database-items">
                 <h3>${typeDescription}</h3>
@@ -335,9 +353,7 @@ function displayDatabaseDetail(database) {
         `;
     }
     
-    console.log('displayDatabaseDetail: Setting content HTML...');
     databaseContent.innerHTML = content;
-    console.log('displayDatabaseDetail: Content HTML set successfully');
 }
 
 // Display achievements as a table
