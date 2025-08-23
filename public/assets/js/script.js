@@ -322,24 +322,43 @@ function displayDatabaseDetail(database) {
     
     // Only show items section if items exist
     if (database.items && Array.isArray(database.items)) {
+        // Filter members to exclude retired and support members
+        let filteredItems = database.items;
+        let displayCount = database.items.length;
+        
+        if (database.type === 'members') {
+            filteredItems = database.items.filter(item => {
+                if (item.properties && item.properties['Tipo de miembro']) {
+                    const memberType = item.properties['Tipo de miembro'];
+                    if (memberType.type === 'select' && memberType.select) {
+                        const typeName = memberType.select.name;
+                        // Exclude "Retirado" and "Support" members
+                        return typeName !== 'Retirado' && typeName !== 'Support';
+                    }
+                }
+                return true; // Include if we can't determine the type
+            });
+            displayCount = filteredItems.length;
+        }
+        
         content += `
             <div class="database-items">
-                <h3>${typeDescription} (${database.items.length})</h3>
+                <h3>${typeDescription} (${displayCount})</h3>
         `;
         
         // Display database items with different formats based on type
-        if (database.items.length === 0) {
+        if (displayCount === 0) {
             content += `<p class="no-items">No se encontraron ${database.type === 'achievements' ? 'logros' : 'miembros'} en esta base de datos.</p>`;
         } else {
             if (database.type === 'achievements') {
                 // Display achievements as a table
                 console.log('displayDatabaseDetail: Displaying achievements table');
                 console.log('displayDatabaseDetail: Database properties for achievements:', database.properties);
-                console.log('displayDatabaseDetail: Number of achievement items:', database.items.length);
+                console.log('displayDatabaseDetail: Number of achievement items:', displayCount);
                 content += displayAchievementsTable(database.items, database.properties || {});
             } else {
-                // Display members in the current card format
-                content += displayMembersCards(database.items);
+                // Display members in the current card format (using filtered items)
+                content += displayMembersCards(filteredItems);
             }
         }
         
