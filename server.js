@@ -402,7 +402,7 @@ app.get('/api/pages/:id/children', async (req, res) => {
         last_edited_time: page.last_edited_time,
         has_children: page.has_children
       })),
-      content_blocks: contentBlocks.length,
+      content_blocks: contentBlocks,
       has_more: response.has_more,
       next_cursor: response.next_cursor,
       total_children: response.results.length
@@ -437,6 +437,7 @@ app.get('/api/private-page', async (req, res) => {
     });
     
     const childPages = children.results.filter(block => block.type === 'child_page');
+    const contentBlocks = children.results.filter(block => block.type !== 'child_page');
     
     res.json({
       page: {
@@ -448,6 +449,7 @@ app.get('/api/private-page', async (req, res) => {
         icon: page.icon,
         cover: page.cover
       },
+      content_blocks: contentBlocks,
       child_pages: childPages.map(child => ({
         id: child.id,
         title: child.child_page?.title || 'Untitled',

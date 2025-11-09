@@ -1019,6 +1019,132 @@ async function loadNormativaDirectly() {
     }
 }
 
+// Render Notion blocks to HTML
+function renderNotionBlocks(blocks) {
+    if (!blocks || blocks.length === 0) {
+        return '<p class="no-content">No hay contenido disponible.</p>';
+    }
+    
+    let html = '<div class="notion-content">';
+    let i = 0;
+    
+    while (i < blocks.length) {
+        const block = blocks[i];
+        
+        // Group consecutive list items
+        if (block.type === 'bulleted_list_item') {
+            html += '<ul class="notion-bulleted-list">';
+            while (i < blocks.length && blocks[i].type === 'bulleted_list_item') {
+                html += renderNotionBlock(blocks[i]);
+                i++;
+            }
+            html += '</ul>';
+            continue;
+        } else if (block.type === 'numbered_list_item') {
+            html += '<ol class="notion-numbered-list">';
+            while (i < blocks.length && blocks[i].type === 'numbered_list_item') {
+                html += renderNotionBlock(blocks[i]);
+                i++;
+            }
+            html += '</ol>';
+            continue;
+        }
+        
+        html += renderNotionBlock(block);
+        i++;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// Render a single Notion block
+function renderNotionBlock(block) {
+    if (!block || !block.type) return '';
+    
+    const type = block.type;
+    const blockData = block[type];
+    
+    if (!blockData) return '';
+    
+    switch (type) {
+        case 'paragraph':
+            const paragraphText = renderRichText(blockData.rich_text || []);
+            return paragraphText ? `<p class="notion-paragraph">${paragraphText}</p>` : '<p class="notion-paragraph empty"></p>';
+            
+        case 'heading_1':
+            return `<h1 class="notion-heading-1">${renderRichText(blockData.rich_text || [])}</h1>`;
+            
+        case 'heading_2':
+            return `<h2 class="notion-heading-2">${renderRichText(blockData.rich_text || [])}</h2>`;
+            
+        case 'heading_3':
+            return `<h3 class="notion-heading-3">${renderRichText(blockData.rich_text || [])}</h3>`;
+            
+        case 'bulleted_list_item':
+            return `<li class="notion-bulleted-list-item">${renderRichText(blockData.rich_text || [])}</li>`;
+            
+        case 'numbered_list_item':
+            return `<li class="notion-numbered-list-item">${renderRichText(blockData.rich_text || [])}</li>`;
+            
+        case 'to_do':
+            const checked = blockData.checked ? 'checked' : '';
+            return `<div class="notion-todo"><input type="checkbox" ${checked} disabled> <span>${renderRichText(blockData.rich_text || [])}</span></div>`;
+            
+        case 'toggle':
+            return `<details class="notion-toggle"><summary>${renderRichText(blockData.rich_text || [])}</summary></details>`;
+            
+        case 'quote':
+            return `<blockquote class="notion-quote">${renderRichText(blockData.rich_text || [])}</blockquote>`;
+            
+        case 'code':
+            const code = escapeHtml(blockData.rich_text?.map(t => t.plain_text).join('') || '');
+            return `<pre class="notion-code"><code>${code}</code></pre>`;
+            
+        case 'divider':
+            return '<hr class="notion-divider">';
+            
+        case 'callout':
+            const calloutText = renderRichText(blockData.rich_text || []);
+            const emoji = blockData.icon?.emoji || '💡';
+            return `<div class="notion-callout"><span class="callout-emoji">${emoji}</span><div class="callout-content">${calloutText}</div></div>`;
+            
+        default:
+            // For unsupported types, try to render rich_text if available
+            if (blockData.rich_text) {
+                return `<div class="notion-block-${type}">${renderRichText(blockData.rich_text)}</div>`;
+            }
+            return '';
+    }
+}
+
+// Render rich text array to HTML
+function renderRichText(richTextArray) {
+    if (!richTextArray || richTextArray.length === 0) {
+        return '';
+    }
+    
+    return richTextArray.map(text => {
+        let content = escapeHtml(text.plain_text || '');
+        
+        if (text.annotations) {
+            const annotations = text.annotations;
+            
+            if (annotations.bold) content = `<strong>${content}</strong>`;
+            if (annotations.italic) content = `<em>${content}</em>`;
+            if (annotations.strikethrough) content = `<s>${content}</s>`;
+            if (annotations.underline) content = `<u>${content}</u>`;
+            if (annotations.code) content = `<code>${content}</code>`;
+            
+            if (text.href) {
+                content = `<a href="${escapeHtml(text.href)}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+            }
+        }
+        
+        return content;
+    }).join('');
+}
+
 // Display Normativa content
 function displayNormativaContent(data) {
     const normativaContent = document.getElementById('normativa-content');
@@ -1038,6 +1164,16 @@ function displayNormativaContent(data) {
                     <p><strong>Última actualización:</strong> ${new Date(data.page.last_edited_time).toLocaleDateString('es-ES')}</p>
                     ${data.page.url ? `<p><a href="${data.page.url}" target="_blank" class="notion-link">Ver en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>` : ''}
                 </div>
+            </div>
+        `;
+    }
+    
+    // Page content section
+    if (data.content_blocks && data.content_blocks.length > 0) {
+        html += `
+            <div class="normativa-content-section">
+                <h3><span class="material-symbols-outlined">article</span> Contenido</h3>
+                ${renderNotionBlocks(data.content_blocks)}
             </div>
         `;
     }
@@ -1114,6 +1250,41 @@ async function viewChildPage(pageId) {
 function showChildPageModal(page, childrenData) {
     const modal = document.createElement('div');
     modal.className = 'child-page-modal';
+    
+    let modalBody = '';
+    
+    // Page content section
+    if (childrenData.content_blocks && childrenData.content_blocks.length > 0) {
+        modalBody += `
+            <div class="modal-content-section">
+                <h3><span class="material-symbols-outlined">article</span> Contenido</h3>
+                ${renderNotionBlocks(childrenData.content_blocks)}
+            </div>
+        `;
+    }
+    
+    // Child pages section
+    if (childrenData.child_pages && childrenData.child_pages.length > 0) {
+        modalBody += `
+            <div class="child-pages-list">
+                <h3><span class="material-symbols-outlined">folder</span> Sub-páginas</h3>
+                ${childrenData.child_pages.map(child => `
+                    <div class="child-page-item" onclick="viewChildPage('${child.id}'); this.closest('.child-page-modal').remove();">
+                        <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
+                        <span>${escapeHtml(child.title)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else if (!childrenData.content_blocks || childrenData.content_blocks.length === 0) {
+        modalBody += '<p>Esta página no tiene contenido ni sub-páginas.</p>';
+    }
+    
+    // Link to Notion
+    if (page.url) {
+        modalBody += `<p style="margin-top: 20px;"><a href="${page.url}" target="_blank" class="notion-link">Ver página completa en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>`;
+    }
+    
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
@@ -1123,18 +1294,7 @@ function showChildPageModal(page, childrenData) {
                 </button>
             </div>
             <div class="modal-body">
-                ${childrenData.child_pages && childrenData.child_pages.length > 0 ? `
-                    <div class="child-pages-list">
-                        <h3>Sub-páginas:</h3>
-                        ${childrenData.child_pages.map(child => `
-                            <div class="child-page-item" onclick="viewChildPage('${child.id}'); this.closest('.child-page-modal').remove();">
-                                <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
-                                <span>${escapeHtml(child.title)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '<p>Esta página no tiene sub-páginas.</p>'}
-                ${page.url ? `<p><a href="${page.url}" target="_blank" class="notion-link">Ver página completa en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>` : ''}
+                ${modalBody}
             </div>
         </div>
     `;

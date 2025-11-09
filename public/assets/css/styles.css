@@ -1188,6 +1188,25 @@ body {
     text-decoration: underline;
 }
 
+.normativa-content-section {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.normativa-content-section h3 {
+    color: var(--rt-primary-color);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    border-bottom: 2px solid #e8f5e8;
+    padding-bottom: 15px;
+}
+
 .normativa-children {
     margin-top: 30px;
 }
@@ -1199,6 +1218,202 @@ body {
     align-items: center;
     gap: 10px;
     font-size: 1.5rem;
+}
+
+/* Notion Content Styles */
+.notion-content {
+    color: #333;
+    line-height: 1.6;
+}
+
+.notion-paragraph {
+    margin: 12px 0;
+    color: #333;
+}
+
+.notion-paragraph.empty {
+    margin: 8px 0;
+    min-height: 1.5em;
+}
+
+.notion-heading-1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--rt-primary-color);
+    margin: 24px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8f5e8;
+}
+
+.notion-heading-2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--rt-primary-color);
+    margin: 20px 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e8f5e8;
+}
+
+.notion-heading-3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--rt-secondary-color);
+    margin: 16px 0 10px 0;
+}
+
+.notion-bulleted-list,
+.notion-numbered-list {
+    margin: 16px 0;
+    padding-left: 0;
+    color: #333;
+}
+
+.notion-bulleted-list {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+.notion-numbered-list {
+    list-style-type: decimal;
+    margin-left: 20px;
+}
+
+.notion-bulleted-list-item,
+.notion-numbered-list-item {
+    margin: 6px 0;
+    padding-left: 8px;
+    color: #333;
+}
+
+.notion-todo {
+    margin: 8px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.notion-todo input[type="checkbox"] {
+    margin-top: 4px;
+    cursor: not-allowed;
+}
+
+.notion-toggle {
+    margin: 12px 0;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.notion-toggle summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--rt-primary-color);
+}
+
+.notion-quote {
+    margin: 16px 0;
+    padding: 16px 20px;
+    border-left: 4px solid var(--rt-primary-color);
+    background: #f9f9f9;
+    font-style: italic;
+    color: #555;
+    border-radius: 4px;
+}
+
+.notion-code {
+    margin: 16px 0;
+    padding: 16px;
+    background: #f4f4f4;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid #e0e0e0;
+}
+
+.notion-code code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #333;
+    white-space: pre;
+}
+
+.notion-divider {
+    margin: 24px 0;
+    border: none;
+    border-top: 2px solid #e0e0e0;
+}
+
+.notion-callout {
+    margin: 16px 0;
+    padding: 16px;
+    background: #f0f7ff;
+    border-left: 4px solid var(--rt-primary-color);
+    border-radius: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.callout-emoji {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.callout-content {
+    flex: 1;
+    color: #333;
+}
+
+.notion-content strong {
+    font-weight: 600;
+    color: #222;
+}
+
+.notion-content em {
+    font-style: italic;
+}
+
+.notion-content code {
+    background: #f4f4f4;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #d63384;
+}
+
+.notion-content a {
+    color: var(--rt-primary-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.notion-content a:hover {
+    color: var(--rt-orange-color);
+    border-bottom-color: var(--rt-orange-color);
+}
+
+.no-content {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+/* Modal content section */
+.modal-content-section {
+    margin-bottom: 30px;
+}
+
+.modal-content-section h3 {
+    color: var(--rt-primary-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #e8f5e8;
+    padding-bottom: 10px;
 }
 
 .child-pages-grid {
