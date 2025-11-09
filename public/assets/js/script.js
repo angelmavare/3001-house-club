@@ -63,6 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (currentPath === '/normativa') {
         console.log('Loading Normativa page...');
         loadNormativaDirectly();
+    } else if (currentPath.startsWith('/pagina/')) {
+        // Handle individual page route
+        const pageId = currentPath.split('/')[2];
+        const parentPageId = new URLSearchParams(window.location.search).get('parent');
+        console.log('Loading page:', pageId, 'parent:', parentPageId);
+        loadPageById(pageId, parentPageId);
     } else if (currentPath.startsWith('/miembros/')) {
         // Handle individual member profile route
         const memberId = currentPath.split('/')[2];
@@ -960,13 +966,13 @@ async function loadNormativaDirectly() {
         
         console.log('loadNormativaDirectly: Creating HTML structure...');
         mainContent.innerHTML = `
-            <div id="normativa-detail" class="database-detail">
+            <div id="page-detail" class="database-detail">
                 <div class="detail-header">
                     <button id="back-btn" class="back-btn">← Volver a Inicio</button>
-                    <h2 id="normativa-title">Normativa</h2>
+                    <h2 id="page-title">Normativa</h2>
                 </div>
                 <div id="loading" class="loading">Cargando normativa...</div>
-                <div id="normativa-content"></div>
+                <div id="page-content"></div>
             </div>
         `;
         
@@ -976,7 +982,7 @@ async function loadNormativaDirectly() {
         initializeDOMElements();
         
         const loadingElement = document.getElementById('loading');
-        const normativaContent = document.getElementById('normativa-content');
+        const pageContent = document.getElementById('page-content');
         const backBtn = document.getElementById('back-btn');
         
         if (loadingElement) {
@@ -1007,7 +1013,7 @@ async function loadNormativaDirectly() {
         
     } catch (error) {
         console.error('loadNormativaDirectly: Error loading normativa:', error);
-        const normativaContent = document.getElementById('normativa-content');
+        const pageContent = document.getElementById('page-content');
         if (normativaContent) {
             normativaContent.innerHTML = `<p class="error">Error al cargar la normativa: ${error.message}</p>`;
         }
@@ -1145,10 +1151,10 @@ function renderRichText(richTextArray) {
     }).join('');
 }
 
-// Display Normativa content
+// Display page content
 function displayNormativaContent(data) {
-    const normativaContent = document.getElementById('normativa-content');
-    if (!normativaContent) {
+    const pageContent = document.getElementById('page-content');
+    if (!pageContent) {
         console.error('displayNormativaContent: Content element not found');
         return;
     }
@@ -1158,11 +1164,10 @@ function displayNormativaContent(data) {
     // Page info section
     if (data.page) {
         html += `
-            <div class="normativa-page-info">
+            <div class="page-info">
                 <div class="page-meta">
                     <p><strong>Creada:</strong> ${new Date(data.page.created_time).toLocaleDateString('es-ES')}</p>
                     <p><strong>Última actualización:</strong> ${new Date(data.page.last_edited_time).toLocaleDateString('es-ES')}</p>
-                    ${data.page.url ? `<p><a href="${data.page.url}" target="_blank" class="notion-link">Ver en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>` : ''}
                 </div>
             </div>
         `;
@@ -1171,8 +1176,7 @@ function displayNormativaContent(data) {
     // Page content section
     if (data.content_blocks && data.content_blocks.length > 0) {
         html += `
-            <div class="normativa-content-section">
-                <h3><span class="material-symbols-outlined">article</span> Contenido</h3>
+            <div class="page-content-section">
                 ${renderNotionBlocks(data.content_blocks)}
             </div>
         `;
@@ -1181,14 +1185,15 @@ function displayNormativaContent(data) {
     // Child pages section
     if (data.child_pages && data.child_pages.length > 0) {
         html += `
-            <div class="normativa-children">
+            <div class="page-children">
                 <h3><span class="material-symbols-outlined">folder</span> Páginas y Secciones</h3>
                 <div class="child-pages-grid">
         `;
         
         data.child_pages.forEach(child => {
+            const currentPageId = window.location.pathname === '/normativa' ? null : window.location.pathname.split('/')[2];
             html += `
-                <div class="child-page-card" onclick="viewChildPage('${child.id}')">
+                <div class="child-page-card" onclick="navigateToPage('${child.id}')">
                     <div class="child-page-icon">
                         <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
                     </div>
@@ -1217,13 +1222,75 @@ function displayNormativaContent(data) {
         `;
     }
     
-    normativaContent.innerHTML = html;
+    pageContent.innerHTML = html;
 }
 
-// View child page
+// Navigate to a child page
+function navigateToPage(pageId) {
+    // Get current page ID if we're on a page route
+    const currentPath = window.location.pathname;
+    let parentPageId = null;
+    
+    if (currentPath.startsWith('/pagina/')) {
+        parentPageId = currentPath.split('/')[2];
+    }
+    
+    if (parentPageId) {
+        window.location.href = `/pagina/${pageId}?parent=${parentPageId}`;
+    } else {
+        window.location.href = `/pagina/${pageId}`;
+    }
+}
+
+// View child page (kept for backwards compatibility)
 async function viewChildPage(pageId) {
+    navigateToPage(pageId);
+}
+
+// Load a specific page by ID
+async function loadPageById(pageId, parentPageId = null) {
     try {
-        console.log('Viewing child page:', pageId);
+        console.log('Loading page:', pageId);
+        
+        // Create the page detail structure
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) {
+            console.error('loadPageById: Main content element not found');
+            return;
+        }
+        
+        mainContent.innerHTML = `
+            <div id="page-detail" class="database-detail">
+                <div class="detail-header">
+                    <button id="back-btn" class="back-btn">← ${parentPageId ? 'Volver' : 'Volver a Inicio'}</button>
+                    <h2 id="page-title">Cargando...</h2>
+                </div>
+                <div id="loading" class="loading">Cargando página...</div>
+                <div id="page-content"></div>
+            </div>
+        `;
+        
+        // Initialize DOM elements
+        initializeDOMElements();
+        
+        const loadingElement = document.getElementById('loading');
+        const pageContent = document.getElementById('page-content');
+        const pageTitle = document.getElementById('page-title');
+        const backBtn = document.getElementById('back-btn');
+        
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                if (parentPageId) {
+                    window.location.href = `/pagina/${parentPageId}`;
+                } else {
+                    window.location.href = '/normativa';
+                }
+            });
+        }
         
         // Fetch page details
         const response = await fetch(`/api/pages/${pageId}`);
@@ -1233,31 +1300,56 @@ async function viewChildPage(pageId) {
         
         const page = await response.json();
         
+        // Set page title
+        if (pageTitle) {
+            pageTitle.textContent = getPageTitle(page);
+        }
+        
         // Fetch children
         const childrenResponse = await fetch(`/api/pages/${pageId}/children`);
-        const childrenData = await childrenResponse.ok ? await childrenResponse.json() : { child_pages: [] };
+        const childrenData = await childrenResponse.ok ? await childrenResponse.json() : { child_pages: [], content_blocks: [] };
         
-        // Create modal or navigate to show page content
-        showChildPageModal(page, childrenData);
+        // Display page content
+        displayPageContent(page, childrenData, parentPageId);
         
     } catch (error) {
-        console.error('Error viewing child page:', error);
-        alert('Error al cargar la página: ' + error.message);
+        console.error('Error loading page:', error);
+        const pageContent = document.getElementById('page-content');
+        if (pageContent) {
+            pageContent.innerHTML = `<p class="error">Error al cargar la página: ${error.message}</p>`;
+        }
+    } finally {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
     }
 }
 
-// Show child page in modal
-function showChildPageModal(page, childrenData) {
-    const modal = document.createElement('div');
-    modal.className = 'child-page-modal';
+// Display page content
+function displayPageContent(page, childrenData, parentPageId = null) {
+    const pageContent = document.getElementById('page-content');
+    if (!pageContent) {
+        console.error('displayPageContent: Content element not found');
+        return;
+    }
     
-    let modalBody = '';
+    let html = '';
+    
+    // Page info section
+    html += `
+        <div class="page-info">
+            <div class="page-meta">
+                <p><strong>Creada:</strong> ${new Date(page.created_time).toLocaleDateString('es-ES')}</p>
+                <p><strong>Última actualización:</strong> ${new Date(page.last_edited_time).toLocaleDateString('es-ES')}</p>
+            </div>
+        </div>
+    `;
     
     // Page content section
     if (childrenData.content_blocks && childrenData.content_blocks.length > 0) {
-        modalBody += `
-            <div class="modal-content-section">
-                <h3><span class="material-symbols-outlined">article</span> Contenido</h3>
+        html += `
+            <div class="page-content-section">
                 ${renderNotionBlocks(childrenData.content_blocks)}
             </div>
         `;
@@ -1265,49 +1357,48 @@ function showChildPageModal(page, childrenData) {
     
     // Child pages section
     if (childrenData.child_pages && childrenData.child_pages.length > 0) {
-        modalBody += `
-            <div class="child-pages-list">
-                <h3><span class="material-symbols-outlined">folder</span> Sub-páginas</h3>
-                ${childrenData.child_pages.map(child => `
-                    <div class="child-page-item" onclick="viewChildPage('${child.id}'); this.closest('.child-page-modal').remove();">
+        html += `
+            <div class="page-children">
+                <h3><span class="material-symbols-outlined">folder</span> Páginas y Secciones</h3>
+                <div class="child-pages-grid">
+        `;
+        
+        childrenData.child_pages.forEach(child => {
+            html += `
+                <div class="child-page-card" onclick="navigateToPage('${child.id}')">
+                    <div class="child-page-icon">
                         <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
-                        <span>${escapeHtml(child.title)}</span>
                     </div>
-                `).join('')}
+                    <div class="child-page-info">
+                        <h4>${escapeHtml(child.title)}</h4>
+                        <p class="child-page-meta">
+                            ${child.has_children ? '<span class="has-children">Tiene sub-páginas</span>' : ''}
+                        </p>
+                    </div>
+                    <div class="child-page-arrow">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
             </div>
         `;
     } else if (!childrenData.content_blocks || childrenData.content_blocks.length === 0) {
-        modalBody += '<p>Esta página no tiene contenido ni sub-páginas.</p>';
+        html += `
+            <div class="no-children">
+                <p>Esta página no tiene contenido ni sub-páginas.</p>
+            </div>
+        `;
     }
     
-    // Link to Notion
-    if (page.url) {
-        modalBody += `<p style="margin-top: 20px;"><a href="${page.url}" target="_blank" class="notion-link">Ver página completa en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>`;
-    }
-    
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>${escapeHtml(getPageTitle(page))}</h2>
-                <button class="modal-close" onclick="this.closest('.child-page-modal').remove()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                ${modalBody}
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Close on background click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
+    pageContent.innerHTML = html;
 }
+
+// Make navigateToPage available globally
+window.navigateToPage = navigateToPage;
 
 // Get page title from page object
 function getPageTitle(page) {

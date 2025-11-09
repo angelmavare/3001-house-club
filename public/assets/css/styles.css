@@ -362,7 +362,8 @@ body {
         margin-bottom: 10px;
     }
     
-    #database-title {
+    #database-title,
+    #page-title {
         font-size: 1.5rem; /* Slightly smaller title on mobile */
         line-height: 1.2;
     }
@@ -402,7 +403,8 @@ body {
         font-size: 0.95rem;
     }
     
-    #database-title {
+    #database-title,
+    #page-title {
         font-size: 1.4rem;
         text-align: center;
         width: 100%;
@@ -443,7 +445,8 @@ body {
     background: var( --rt-primary-color );
 }
 
-#database-title {
+#database-title,
+#page-title {
     color: #333;
     font-size: 1.8rem;
 }
@@ -1155,8 +1158,8 @@ body {
     }
 }
 
-/* Normativa Page Styles */
-.normativa-page-info {
+/* Page Styles */
+.page-info {
     background: white;
     border-radius: 12px;
     padding: 20px;
@@ -1188,7 +1191,7 @@ body {
     text-decoration: underline;
 }
 
-.normativa-content-section {
+.page-content-section {
     background: white;
     border-radius: 12px;
     padding: 30px;
@@ -1196,28 +1199,34 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.normativa-content-section h3 {
-    color: var(--rt-primary-color);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.5rem;
-    border-bottom: 2px solid #e8f5e8;
-    padding-bottom: 15px;
-}
-
-.normativa-children {
+.page-children {
     margin-top: 30px;
 }
 
-.normativa-children h3 {
+.page-children h3 {
     color: var(--rt-primary-color);
     margin-bottom: 20px;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 1.5rem;
+}
+
+/* Mobile: Reduce padding and shadows for page content */
+@media (max-width: 768px) {
+    .page-content-section {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    
+    .page-info {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
 }
 
 /* Notion Content Styles */

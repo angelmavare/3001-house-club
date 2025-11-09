@@ -146,6 +146,11 @@ app.get('/normativa', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
+// Individual page route
+app.get('/pagina/:id', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
+
 // API route for achievements database
 app.get('/api/logros', async (req, res) => {
   try {
