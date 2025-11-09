@@ -43,6 +43,13 @@ A web application built with Express.js that showcases achievements and members 
    - Copy the "Internal Integration Token"
    - Add the integration to your workspace
    - Share your achievements and members databases with the integration
+   
+   **To access private pages:**
+   - Open the private page in Notion
+   - Click the `•••` menu at the top right of the page
+   - Scroll down to `Add connections`
+   - Search for and select your integration from the dropdown
+   - The integration will now have access to that page and all its child pages
 
 5. **Database Naming Requirements**
    
@@ -66,8 +73,20 @@ The application will be available at `http://localhost:3000`
 
 ## API Endpoints
 
+### Database Endpoints
 - `GET /api/databases` - List only achievements and members databases
 - `GET /api/databases/:id` - Get detailed information about a specific database
+- `GET /api/logros` - Get achievements database
+- `GET /api/miembros` - Get members database
+
+### Page Endpoints
+- `GET /api/pages/:id` - Retrieve a specific page by ID
+- `GET /api/pages/:id/children` - List child pages and content blocks of a page
+- `GET /api/private-page` - Get the configured private page and its children
+
+### Query Parameters for `/api/pages/:id/children`
+- `page_size` (optional): Number of results to return (default: 100, max: 100)
+- `start_cursor` (optional): Cursor for pagination
 
 ## Project Structure
 
@@ -122,6 +141,29 @@ Other databases in your workspace will be hidden from the application.
 - The application is designed for internal use (not public-facing)
 - Consider implementing authentication if you plan to make it public
 
+## Accessing Private Pages
+
+To access a private page through the API, you need to:
+
+1. **Share the page with your integration:**
+   - Open the page in Notion
+   - Click the `•••` menu (three dots) at the top right
+   - Scroll to `Add connections`
+   - Search for your integration name
+   - Select it from the dropdown
+
+2. **Get the page ID:**
+   - The page ID is in the URL: `https://www.notion.so/Your-Page-12a03b7b0a84801e839cdace8e210497`
+   - Copy the ID part (the long string at the end)
+   - You can use it with or without dashes
+
+3. **Use the API endpoints:**
+   - `GET /api/pages/{page_id}` - Get page details
+   - `GET /api/pages/{page_id}/children` - List sub-pages and content
+   - `GET /api/private-page` - Access the configured private page
+
+**Note:** When you share a parent page with the integration, all child pages are automatically accessible.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -136,7 +178,12 @@ Other databases in your workspace will be hidden from the application.
    - Check that the integration has been shared with the databases
    - Verify your API key has the correct permissions
 
-3. **Port already in use**
+3. **"Page not found or integration does not have access" error**
+   - Make sure you've shared the page with your integration (see "Accessing Private Pages" above)
+   - Verify the page ID is correct (check the URL in Notion)
+   - Ensure you're using the correct integration token
+
+4. **Port already in use**
    - Change the PORT in your `.env` file
    - Or kill the process using the current port
 

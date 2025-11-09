@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (currentPath === '/miembros') {
         console.log('Loading members directly...');
         loadMembersDirectly();
+    } else if (currentPath === '/normativa') {
+        console.log('Loading Normativa page...');
+        loadNormativaDirectly();
     } else if (currentPath.startsWith('/miembros/')) {
         // Handle individual member profile route
         const memberId = currentPath.split('/')[2];
@@ -83,6 +86,8 @@ function updateActiveNavigation(currentPath) {
         } else if (currentPath === '/logros' && link.getAttribute('href') === '/logros') {
             link.classList.add('active');
         } else if (currentPath === '/miembros' && link.getAttribute('href') === '/miembros') {
+            link.classList.add('active');
+        } else if (currentPath === '/normativa' && link.getAttribute('href') === '/normativa') {
             link.classList.add('active');
         }
     });
@@ -940,6 +945,230 @@ async function loadMembersDirectly() {
         }
     }
 }
+
+// Load Normativa page directly
+async function loadNormativaDirectly() {
+    try {
+        console.log('loadNormativaDirectly: Starting...');
+        
+        // Create the page detail structure
+        const mainContent = document.getElementById('main-content');
+        if (!mainContent) {
+            console.error('loadNormativaDirectly: Main content element not found');
+            return;
+        }
+        
+        console.log('loadNormativaDirectly: Creating HTML structure...');
+        mainContent.innerHTML = `
+            <div id="normativa-detail" class="database-detail">
+                <div class="detail-header">
+                    <button id="back-btn" class="back-btn">← Volver a Inicio</button>
+                    <h2 id="normativa-title">Normativa</h2>
+                </div>
+                <div id="loading" class="loading">Cargando normativa...</div>
+                <div id="normativa-content"></div>
+            </div>
+        `;
+        
+        console.log('loadNormativaDirectly: HTML structure created, initializing DOM elements...');
+        
+        // Initialize DOM elements after creating HTML
+        initializeDOMElements();
+        
+        const loadingElement = document.getElementById('loading');
+        const normativaContent = document.getElementById('normativa-content');
+        const backBtn = document.getElementById('back-btn');
+        
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+        
+        console.log('loadNormativaDirectly: Fetching normativa from /api/private-page...');
+        const response = await fetch('/api/private-page');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('loadNormativaDirectly: Normativa data received:', data);
+        
+        // Display normativa content
+        displayNormativaContent(data);
+        
+        // Update active navigation
+        updateActiveNavigation('/normativa');
+        
+    } catch (error) {
+        console.error('loadNormativaDirectly: Error loading normativa:', error);
+        const normativaContent = document.getElementById('normativa-content');
+        if (normativaContent) {
+            normativaContent.innerHTML = `<p class="error">Error al cargar la normativa: ${error.message}</p>`;
+        }
+    } finally {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+    }
+}
+
+// Display Normativa content
+function displayNormativaContent(data) {
+    const normativaContent = document.getElementById('normativa-content');
+    if (!normativaContent) {
+        console.error('displayNormativaContent: Content element not found');
+        return;
+    }
+    
+    let html = '';
+    
+    // Page info section
+    if (data.page) {
+        html += `
+            <div class="normativa-page-info">
+                <div class="page-meta">
+                    <p><strong>Creada:</strong> ${new Date(data.page.created_time).toLocaleDateString('es-ES')}</p>
+                    <p><strong>Última actualización:</strong> ${new Date(data.page.last_edited_time).toLocaleDateString('es-ES')}</p>
+                    ${data.page.url ? `<p><a href="${data.page.url}" target="_blank" class="notion-link">Ver en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Child pages section
+    if (data.child_pages && data.child_pages.length > 0) {
+        html += `
+            <div class="normativa-children">
+                <h3><span class="material-symbols-outlined">folder</span> Páginas y Secciones</h3>
+                <div class="child-pages-grid">
+        `;
+        
+        data.child_pages.forEach(child => {
+            html += `
+                <div class="child-page-card" onclick="viewChildPage('${child.id}')">
+                    <div class="child-page-icon">
+                        <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
+                    </div>
+                    <div class="child-page-info">
+                        <h4>${escapeHtml(child.title)}</h4>
+                        <p class="child-page-meta">
+                            ${child.has_children ? '<span class="has-children">Tiene sub-páginas</span>' : ''}
+                        </p>
+                    </div>
+                    <div class="child-page-arrow">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="no-children">
+                <p>Esta página no tiene sub-páginas.</p>
+            </div>
+        `;
+    }
+    
+    normativaContent.innerHTML = html;
+}
+
+// View child page
+async function viewChildPage(pageId) {
+    try {
+        console.log('Viewing child page:', pageId);
+        
+        // Fetch page details
+        const response = await fetch(`/api/pages/${pageId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const page = await response.json();
+        
+        // Fetch children
+        const childrenResponse = await fetch(`/api/pages/${pageId}/children`);
+        const childrenData = await childrenResponse.ok ? await childrenResponse.json() : { child_pages: [] };
+        
+        // Create modal or navigate to show page content
+        showChildPageModal(page, childrenData);
+        
+    } catch (error) {
+        console.error('Error viewing child page:', error);
+        alert('Error al cargar la página: ' + error.message);
+    }
+}
+
+// Show child page in modal
+function showChildPageModal(page, childrenData) {
+    const modal = document.createElement('div');
+    modal.className = 'child-page-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>${escapeHtml(getPageTitle(page))}</h2>
+                <button class="modal-close" onclick="this.closest('.child-page-modal').remove()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ${childrenData.child_pages && childrenData.child_pages.length > 0 ? `
+                    <div class="child-pages-list">
+                        <h3>Sub-páginas:</h3>
+                        ${childrenData.child_pages.map(child => `
+                            <div class="child-page-item" onclick="viewChildPage('${child.id}'); this.closest('.child-page-modal').remove();">
+                                <span class="material-symbols-outlined">${child.has_children ? 'folder' : 'description'}</span>
+                                <span>${escapeHtml(child.title)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p>Esta página no tiene sub-páginas.</p>'}
+                ${page.url ? `<p><a href="${page.url}" target="_blank" class="notion-link">Ver página completa en Notion <span class="material-symbols-outlined">open_in_new</span></a></p>` : ''}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Get page title from page object
+function getPageTitle(page) {
+    if (page.properties && page.properties.title) {
+        const titleProp = page.properties.title;
+        if (titleProp.title && titleProp.title.length > 0) {
+            return titleProp.title.map(t => t.plain_text).join('');
+        }
+    }
+    return 'Sin título';
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Make viewChildPage available globally
+window.viewChildPage = viewChildPage;
 
 // Load member profile directly from URL
 async function loadMemberProfileDirectly(memberId) {
