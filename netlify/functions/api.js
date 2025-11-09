@@ -9,9 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Notion client
+// Initialize Notion client with API version 2025-09-03
 const notion = new Client({
   auth: process.env.NOTION_API_KEY,
+  notionVersion: '2025-09-03',
 });
 
 // Club database IDs
@@ -20,6 +21,42 @@ const CLUB_DATABASES = {
   achievements: '24403b7b-0a84-80ee-9e6d-fe5d8ec10aee',
   routes: '12a03b7b-0a84-818c-94e6-000caef294fe'
 };
+
+// Cache for data source IDs (database_id -> data_source_id)
+const dataSourceCache = new Map();
+
+/**
+ * Get data source ID from a database ID
+ * This implements Step 1 of the migration guide: discovery step to fetch data_source_id
+ * @param {string} databaseId - The database ID
+ * @returns {Promise<string>} - The data source ID (first data source for the database)
+ */
+async function getDataSourceId(databaseId) {
+  // Check cache first
+  if (dataSourceCache.has(databaseId)) {
+    return dataSourceCache.get(databaseId);
+  }
+
+  try {
+    // Use the new Get Database API to retrieve data sources
+    const database = await notion.databases.retrieve({ 
+      database_id: databaseId 
+    });
+    
+    // Get the first data source (most databases will have only one)
+    if (database.data_sources && database.data_sources.length > 0) {
+      const dataSourceId = database.data_sources[0].id;
+      // Cache the result
+      dataSourceCache.set(databaseId, dataSourceId);
+      return dataSourceId;
+    } else {
+      throw new Error(`No data sources found for database ${databaseId}`);
+    }
+  } catch (error) {
+    console.error(`Error fetching data source for database ${databaseId}:`, error);
+    throw error;
+  }
+}
 
 // Routes
 app.get('/api/test-simple', (req, res) => {
@@ -51,7 +88,8 @@ app.get('/api/databases', async (req, res) => {
         created_time: membersDb.created_time,
         last_edited_time: membersDb.last_edited_time,
         url: membersDb.url,
-        type: 'members'
+        type: 'members',
+        data_sources: membersDb.data_sources || []
       });
     } catch (error) {
       console.error('Error fetching members database:', error);
@@ -70,7 +108,8 @@ app.get('/api/databases', async (req, res) => {
         created_time: achievementsDb.created_time,
         last_edited_time: achievementsDb.last_edited_time,
         url: achievementsDb.url,
-        type: 'achievements'
+        type: 'achievements',
+        data_sources: achievementsDb.data_sources || []
       });
     } catch (error) {
       console.error('Error fetching achievements database:', error);
@@ -89,7 +128,8 @@ app.get('/api/databases', async (req, res) => {
         created_time: routesDb.created_time,
         last_edited_time: routesDb.last_edited_time,
         url: routesDb.url,
-        type: 'routes'
+        type: 'routes',
+        data_sources: routesDb.data_sources || []
       });
     } catch (error) {
       console.error('Error fetching routes database:', error);
@@ -106,13 +146,23 @@ app.get('/api/databases', async (req, res) => {
 app.get('/api/logros', async (req, res) => {
     try {
         console.log('Fetching achievements database...');
-        const response = await notion.databases.query({
-            database_id: CLUB_DATABASES.achievements
+        const databaseId = CLUB_DATABASES.achievements;
+        
+        // Get data source ID for querying
+        const dataSourceId = await getDataSourceId(databaseId);
+        
+        // Use data source query endpoint (migrated from databases.query)
+        const response = await notion.request({
+            method: 'post',
+            path: `data_sources/${dataSourceId}/query`,
+            body: {
+                page_size: 100
+            }
         });
         
         console.log(`Found ${response.results.length} achievements`);
         res.json({
-            id: CLUB_DATABASES.achievements,
+            id: databaseId,
             title: 'Logros',
             type: 'achievements',
             items: response.results
@@ -145,13 +195,23 @@ app.get('/api/logros/:id', async (req, res) => {
 app.get('/api/rutas', async (req, res) => {
     try {
         console.log('Fetching routes database...');
-        const response = await notion.databases.query({
-            database_id: CLUB_DATABASES.routes
+        const databaseId = CLUB_DATABASES.routes;
+        
+        // Get data source ID for querying
+        const dataSourceId = await getDataSourceId(databaseId);
+        
+        // Use data source query endpoint (migrated from databases.query)
+        const response = await notion.request({
+            method: 'post',
+            path: `data_sources/${dataSourceId}/query`,
+            body: {
+                page_size: 100
+            }
         });
         
         console.log(`Found ${response.results.length} routes`);
         res.json({
-            id: CLUB_DATABASES.routes,
+            id: databaseId,
             title: 'Bitácora de Rutas',
             type: 'routes',
             items: response.results
@@ -184,13 +244,23 @@ app.get('/api/rutas/:id', async (req, res) => {
 app.get('/api/miembros', async (req, res) => {
     try {
         console.log('Fetching members database...');
-        const response = await notion.databases.query({
-            database_id: CLUB_DATABASES.members
+        const databaseId = CLUB_DATABASES.members;
+        
+        // Get data source ID for querying
+        const dataSourceId = await getDataSourceId(databaseId);
+        
+        // Use data source query endpoint (migrated from databases.query)
+        const response = await notion.request({
+            method: 'post',
+            path: `data_sources/${dataSourceId}/query`,
+            body: {
+                page_size: 100
+            }
         });
         
         console.log(`Found ${response.results.length} members`);
         res.json({
-            id: CLUB_DATABASES.members,
+            id: databaseId,
             title: 'Miembros',
             type: 'members',
             items: response.results
@@ -232,10 +302,16 @@ app.get('/api/databases/:id', async (req, res) => {
     // Get database metadata
     const database = await notion.databases.retrieve({ database_id: id });
     
-    // Get database contents (first 100 items)
-    const response = await notion.databases.query({
-      database_id: id,
-      page_size: 100
+    // Get data source ID for querying
+    const dataSourceId = await getDataSourceId(id);
+    
+    // Use data source query endpoint (migrated from databases.query)
+    const response = await notion.request({
+      method: 'post',
+      path: `data_sources/${dataSourceId}/query`,
+      body: {
+        page_size: 100
+      }
     });
     
     const databaseInfo = {
