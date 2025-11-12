@@ -37,15 +37,67 @@
         }
         
         .login-message {
-            color: #666;
+            color: #333;
             font-style: italic;
             margin-bottom: 30px;
             text-align: center;
-            font-size: 1.1rem;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid var(--rt-primary-color);
+            font-size: 1.2rem;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+            border-radius: 12px;
+            border: 2px solid var(--rt-primary-color);
+            box-shadow: 0 4px 12px rgba(8, 45, 40, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-message::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(8, 45, 40, 0.05) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+        
+        .login-message-icon {
+            font-size: 3rem;
+            color: var(--rt-primary-color);
+            filter: drop-shadow(0 2px 4px rgba(8, 45, 40, 0.3));
+            z-index: 1;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+        
+        .login-message-text {
+            z-index: 1;
+            font-weight: 500;
+            line-height: 1.6;
         }
         
         .login-tabs {
@@ -175,6 +227,17 @@
             .login-header h1 {
                 font-size: 1.5rem;
             }
+            
+            .login-message {
+                flex-direction: column;
+                gap: 12px;
+                padding: 20px;
+                font-size: 1rem;
+            }
+            
+            .login-message-icon {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
@@ -187,7 +250,8 @@
             </div>
             
             <div class="login-message">
-                Si conoces el camino, recordarás la contraseña
+                <span class="material-symbols-outlined login-message-icon">explore</span>
+                <span class="login-message-text">Si conoces el camino, recordarás la contraseña</span>
             </div>
             
             <div class="error-message" id="error-message"></div>
