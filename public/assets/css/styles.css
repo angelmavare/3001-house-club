@@ -247,6 +247,42 @@ body {
             'GRAD' 0,
             'opsz' 24;
     }
+    
+    /* Floating logout button for mobile */
+    .detail-header .logout-btn {
+        display: none;
+    }
+    
+    /* Show logout button as floating button in mobile */
+    #logout-btn {
+        position: fixed !important;
+        top: 20px;
+        right: 20px;
+        z-index: 999;
+        margin-left: 0 !important;
+        padding: 12px;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background: var(--rt-secondary-color) !important;
+        color: white !important;
+        border: 2px solid var(--rt-secondary-color) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    #logout-btn .material-symbols-outlined {
+        font-size: 24px;
+    }
+    
+    #logout-btn:hover,
+    #logout-btn:active {
+        background: var(--rt-secondary-color) !important;
+        border-color: var(--rt-secondary-color) !important;
+        transform: scale(1.05);
+    }
 }
 
 @media (max-width: 480px) {
@@ -279,6 +315,19 @@ body {
     
     .mobile-nav-label {
         font-size: 0.65rem;
+    }
+    
+    /* Adjust floating logout button position for smaller screens */
+    #logout-btn {
+        top: 40px;
+        right: 25px;
+        width: 44px;
+        height: 44px;
+        padding: 10px;
+    }
+    
+    #logout-btn .material-symbols-outlined {
+        font-size: 22px;
     }
 }
 
