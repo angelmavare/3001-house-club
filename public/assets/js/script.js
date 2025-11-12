@@ -44,8 +44,22 @@ function initializeDOMElements() {
 }
 
 // DOM Content Loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded, checking current path...');
+    
+    // Update normativa link behavior
+    const normativaLink = document.getElementById('normativa-link');
+    if (normativaLink) {
+        normativaLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const isAuthenticated = await checkAuthStatus();
+            if (isAuthenticated) {
+                window.location.href = '/normativa';
+            } else {
+                window.location.href = '/login';
+            }
+        });
+    }
     
     // Check current path to determine what to load
     const currentPath = window.location.pathname;
@@ -952,10 +966,31 @@ async function loadMembersDirectly() {
     }
 }
 
+// Check authentication status
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/auth/status', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        return data.authenticated;
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+        return false;
+    }
+}
+
 // Load Normativa page directly
 async function loadNormativaDirectly() {
     try {
         console.log('loadNormativaDirectly: Starting...');
+        
+        // Check authentication first
+        const isAuthenticated = await checkAuthStatus();
+        if (!isAuthenticated) {
+            window.location.href = '/login';
+            return;
+        }
         
         // Create the page detail structure
         const mainContent = document.getElementById('main-content');
@@ -970,6 +1005,9 @@ async function loadNormativaDirectly() {
                 <div class="detail-header">
                     <button id="back-btn" class="back-btn">← Volver a Inicio</button>
                     <h2 id="page-title">Normativa</h2>
+                    <button id="logout-btn" class="logout-btn" title="Cerrar sesión">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
                 </div>
                 <div id="loading" class="loading">Cargando normativa...</div>
                 <div id="page-content"></div>
@@ -984,6 +1022,7 @@ async function loadNormativaDirectly() {
         const loadingElement = document.getElementById('loading');
         const pageContent = document.getElementById('page-content');
         const backBtn = document.getElementById('back-btn');
+        const logoutBtn = document.getElementById('logout-btn');
         
         if (loadingElement) {
             loadingElement.style.display = 'block';
@@ -995,8 +1034,30 @@ async function loadNormativaDirectly() {
             });
         }
         
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    window.location.href = '/login';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                }
+            });
+        }
+        
         console.log('loadNormativaDirectly: Fetching normativa from /api/private-page...');
-        const response = await fetch('/api/private-page');
+        const response = await fetch('/api/private-page', {
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -1013,6 +1074,10 @@ async function loadNormativaDirectly() {
         
     } catch (error) {
         console.error('loadNormativaDirectly: Error loading normativa:', error);
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            window.location.href = '/login';
+            return;
+        }
         const pageContent = document.getElementById('page-content');
         if (pageContent) {
             pageContent.innerHTML = `<p class="error">Error al cargar la normativa: ${error.message}</p>`;
@@ -1226,7 +1291,14 @@ function displayNormativaContent(data) {
 }
 
 // Navigate to a child page
-function navigateToPage(pageId) {
+async function navigateToPage(pageId) {
+    // Check authentication first
+    const isAuthenticated = await checkAuthStatus();
+    if (!isAuthenticated) {
+        window.location.href = '/login';
+        return;
+    }
+    
     // Get current page ID if we're on a page route
     const currentPath = window.location.pathname;
     let parentPageId = null;
@@ -1252,6 +1324,13 @@ async function loadPageById(pageId, parentPageId = null) {
     try {
         console.log('Loading page:', pageId);
         
+        // Check authentication first
+        const isAuthenticated = await checkAuthStatus();
+        if (!isAuthenticated) {
+            window.location.href = '/login';
+            return;
+        }
+        
         // Create the page detail structure
         const mainContent = document.getElementById('main-content');
         if (!mainContent) {
@@ -1264,6 +1343,9 @@ async function loadPageById(pageId, parentPageId = null) {
                 <div class="detail-header">
                     <button id="back-btn" class="back-btn">← ${parentPageId ? 'Volver' : 'Volver a Inicio'}</button>
                     <h2 id="page-title">Cargando...</h2>
+                    <button id="logout-btn" class="logout-btn" title="Cerrar sesión">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
                 </div>
                 <div id="loading" class="loading">Cargando página...</div>
                 <div id="page-content"></div>
@@ -1277,6 +1359,7 @@ async function loadPageById(pageId, parentPageId = null) {
         const pageContent = document.getElementById('page-content');
         const pageTitle = document.getElementById('page-title');
         const backBtn = document.getElementById('back-btn');
+        const logoutBtn = document.getElementById('logout-btn');
         
         if (loadingElement) {
             loadingElement.style.display = 'block';
@@ -1292,8 +1375,31 @@ async function loadPageById(pageId, parentPageId = null) {
             });
         }
         
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    window.location.href = '/login';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                }
+            });
+        }
+        
         // Fetch page details
-        const response = await fetch(`/api/pages/${pageId}`);
+        const response = await fetch(`/api/pages/${pageId}`, {
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -1306,7 +1412,9 @@ async function loadPageById(pageId, parentPageId = null) {
         }
         
         // Fetch children
-        const childrenResponse = await fetch(`/api/pages/${pageId}/children`);
+        const childrenResponse = await fetch(`/api/pages/${pageId}/children`, {
+            credentials: 'include'
+        });
         const childrenData = await childrenResponse.ok ? await childrenResponse.json() : { child_pages: [], content_blocks: [] };
         
         // Display page content
@@ -1314,6 +1422,10 @@ async function loadPageById(pageId, parentPageId = null) {
         
     } catch (error) {
         console.error('Error loading page:', error);
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            window.location.href = '/login';
+            return;
+        }
         const pageContent = document.getElementById('page-content');
         if (pageContent) {
             pageContent.innerHTML = `<p class="error">Error al cargar la página: ${error.message}</p>`;

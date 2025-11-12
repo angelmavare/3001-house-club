@@ -445,6 +445,33 @@ body {
     background: var( --rt-primary-color );
 }
 
+.logout-btn {
+    background: transparent;
+    border: 2px solid var(--rt-primary-color);
+    color: var(--rt-primary-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    margin-left: auto;
+}
+
+.logout-btn:hover {
+    background: var(--rt-primary-color);
+    color: white;
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
 #database-title,
 #page-title {
     color: #333;

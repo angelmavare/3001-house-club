@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - 3001 Club House</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #082d28 0%, #000000 100%);
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            color: var(--rt-primary-color);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .login-message {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--rt-primary-color);
+        }
+        
+        .login-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .login-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .login-tab.active {
+            color: var(--rt-primary-color);
+            border-bottom-color: var(--rt-primary-color);
+            font-weight: 600;
+        }
+        
+        .login-tab:hover {
+            color: var(--rt-primary-color);
+        }
+        
+        .login-form {
+            display: none;
+        }
+        
+        .login-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--rt-primary-color);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--rt-primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            background: var(--rt-secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(8, 45, 40, 0.3);
+        }
+        
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: var(--rt-primary-color);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .login-box {
+                padding: 30px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>3001 Club House</h1>
+                <p style="color: #666; margin-top: 10px;">Acceso a Normativa</p>
+            </div>
+            
+            <div class="login-message">
+                Si conoces el camino, recordarás la contraseña
+            </div>
+            
+            <div class="error-message" id="error-message"></div>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="general">Acceso General</button>
+                <button class="login-tab" data-tab="user">Usuario</button>
+            </div>
+            
+            <!-- General Login Form -->
+            <form class="login-form active" id="general-form">
+                <div class="form-group">
+                    <label for="general-password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="general-password" 
+                        name="password" 
+                        placeholder="Ingresa la contraseña"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+                <button type="submit" class="login-btn" id="general-submit">
+                    Ingresar
+                </button>
+            </form>
+            
+            <!-- User Login Form -->
+            <form class="login-form" id="user-form">
+                <div class="form-group">
+                    <label for="user-username">Usuario</label>
+                    <input 
+                        type="text" 
+                        id="user-username" 
+                        name="username" 
+                        placeholder="Ingresa tu usuario"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="user-password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="user-password" 
+                        name="password" 
+                        placeholder="Ingresa tu contraseña"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+                <button type="submit" class="login-btn" id="user-submit">
+                    Ingresar
+                </button>
+            </form>
+            
+            <div class="back-link">
+                <a href="/">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        const tabs = document.querySelectorAll('.login-tab');
+        const forms = document.querySelectorAll('.login-form');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabType = tab.dataset.tab;
+                
+                // Update tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update forms
+                forms.forEach(f => f.classList.remove('active'));
+                document.getElementById(`${tabType}-form`).classList.add('active');
+                
+                // Clear error
+                hideError();
+            });
+        });
+        
+        // Error handling
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+        
+        function hideError() {
+            const errorEl = document.getElementById('error-message');
+            errorEl.classList.remove('show');
+        }
+        
+        // General login form
+        document.getElementById('general-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            
+            const password = document.getElementById('general-password').value;
+            const submitBtn = document.getElementById('general-submit');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        password: password,
+                        loginType: 'general'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Redirect to normativa
+                    window.location.href = '/normativa';
+                } else {
+                    showError(data.error || 'Contraseña incorrecta');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Ingresar';
+                }
+            } catch (error) {
+                showError('Error al conectar con el servidor');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Ingresar';
+            }
+        });
+        
+        // User login form
+        document.getElementById('user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            
+            const username = document.getElementById('user-username').value;
+            const password = document.getElementById('user-password').value;
+            const submitBtn = document.getElementById('user-submit');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        loginType: 'user'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Redirect to normativa
+                    window.location.href = '/normativa';
+                } else {
+                    showError(data.error || 'Usuario o contraseña incorrectos');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Ingresar';
+                }
+            } catch (error) {
+                showError('Error al conectar con el servidor');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Ingresar';
+            }
+        });
+        
+        // Check if already authenticated
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    window.location.href = '/normativa';
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+            }
+        }
+        
+        // Check on load
+        checkAuth();
+    </script>
+</body>
+</html>
+

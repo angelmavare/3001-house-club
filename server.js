@@ -1,14 +1,31 @@
 const express = require('express');
 const { Client } = require('@notionhq/client');
 const cors = require('cors');
+const session = require('express-session');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || '3001-club-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // Initialize Notion client with API version 2025-09-03
@@ -26,6 +43,9 @@ const CLUB_DATABASES = {
 // Private page ID (format: with or without dashes)
 // Original ID: 12a03b7b0a84801e839cdace8e210497
 const PRIVATE_PAGE_ID = '12a03b7b-0a84-801e-839c-dace8e210497';
+
+// Passwords database ID
+const PASSWORDS_DATABASE_ID = '2a903b7b-0a84-8007-92fd-c438ee0a47cd';
 
 // Cache for data source IDs (database_id -> data_source_id)
 const dataSourceCache = new Map();
@@ -62,6 +82,143 @@ async function getDataSourceId(databaseId) {
     throw error;
   }
 }
+
+// Authentication middleware
+function requireAuth(req, res, next) {
+  if (req.session && req.session.authenticated) {
+    return next();
+  }
+  res.status(401).json({ error: 'Unauthorized', requiresAuth: true });
+}
+
+// Get passwords from Notion database
+async function getPasswordsFromNotion() {
+  try {
+    const databaseId = PASSWORDS_DATABASE_ID;
+    
+    // Get data source ID
+    const dataSourceId = await getDataSourceId(databaseId);
+    
+    // Query the passwords database
+    const response = await notion.request({
+      method: 'post',
+      path: `data_sources/${dataSourceId}/query`,
+      body: {
+        page_size: 100
+      }
+    });
+    
+    const passwords = {};
+    
+    response.results.forEach(item => {
+      const name = item.properties?.Nombre || item.properties?.Name;
+      const password = item.properties?.Password || item.properties?.password;
+      
+      if (name && password) {
+        const nameValue = extractPropertyValue(name);
+        const passwordValue = extractPropertyValue(password);
+        passwords[nameValue] = passwordValue;
+      }
+    });
+    
+    return passwords;
+  } catch (error) {
+    console.error('Error fetching passwords from Notion:', error);
+    throw error;
+  }
+}
+
+// Helper function to extract property value
+function extractPropertyValue(property) {
+  if (!property) return null;
+  
+  if (property.type === 'title' && property.title) {
+    return property.title.map(t => t.plain_text).join('');
+  }
+  if (property.type === 'rich_text' && property.rich_text) {
+    return property.rich_text.map(t => t.plain_text).join('');
+  }
+  if (property.type === 'password' && property.password) {
+    return property.password;
+  }
+  
+  return null;
+}
+
+// Authentication routes
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password, loginType } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+    
+    // Get passwords from Notion
+    const passwords = await getPasswordsFromNotion();
+    
+    if (loginType === 'general') {
+      // General login - only password needed (for Normativa)
+      const normativaPassword = passwords['Santo y seña'];
+      
+      if (normativaPassword && password === normativaPassword) {
+        req.session.authenticated = true;
+        req.session.loginType = 'general';
+        req.session.username = 'general';
+        return res.json({ 
+          success: true, 
+          message: 'Login successful',
+          loginType: 'general'
+        });
+      } else {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+    } else if (loginType === 'user') {
+      // User login - username and password needed
+      if (!username) {
+        return res.status(400).json({ error: 'Username is required for user login' });
+      }
+      
+      const userPassword = passwords[username];
+      
+      if (userPassword && password === userPassword) {
+        req.session.authenticated = true;
+        req.session.loginType = 'user';
+        req.session.username = username;
+        return res.json({ 
+          success: true, 
+          message: 'Login successful',
+          loginType: 'user',
+          username: username
+        });
+      } else {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+    } else {
+      return res.status(400).json({ error: 'Invalid login type' });
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed', details: error.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    res.json({ success: true, message: 'Logged out successfully' });
+  });
+});
+
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+    authenticated: !!(req.session && req.session.authenticated),
+    loginType: req.session?.loginType,
+    username: req.session?.username
+  });
+});
 
 // Routes
 app.get('/api/test-simple', (req, res) => {
@@ -141,13 +298,18 @@ app.get('/miembros/:id', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-// Normativa page route
-app.get('/normativa', (req, res) => {
+// Login page route
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/public/login.html');
+});
+
+// Normativa page route - protected
+app.get('/normativa', requireAuth, (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-// Individual page route
-app.get('/pagina/:id', (req, res) => {
+// Individual page route - protected
+app.get('/pagina/:id', requireAuth, (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
@@ -352,8 +514,8 @@ app.get('/api/databases/:id', async (req, res) => {
   }
 });
 
-// API route to retrieve a private page
-app.get('/api/pages/:id', async (req, res) => {
+// API route to retrieve a private page - protected
+app.get('/api/pages/:id', requireAuth, async (req, res) => {
   try {
     const pageId = req.params.id;
     console.log('Fetching page:', pageId);
@@ -377,8 +539,8 @@ app.get('/api/pages/:id', async (req, res) => {
   }
 });
 
-// API route to get children of a page (list sub-pages)
-app.get('/api/pages/:id/children', async (req, res) => {
+// API route to get children of a page (list sub-pages) - protected
+app.get('/api/pages/:id/children', requireAuth, async (req, res) => {
   try {
     const pageId = req.params.id;
     const pageSize = parseInt(req.query.page_size) || 100;
@@ -425,8 +587,8 @@ app.get('/api/pages/:id/children', async (req, res) => {
   }
 });
 
-// API route for the specific private page
-app.get('/api/private-page', async (req, res) => {
+// API route for the specific private page - protected
+app.get('/api/private-page', requireAuth, async (req, res) => {
   try {
     console.log('Fetching private page:', PRIVATE_PAGE_ID);
     
