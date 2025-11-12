@@ -47,10 +47,24 @@ function initializeDOMElements() {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('DOM loaded, checking current path...');
     
-    // Update normativa link behavior
+    // Update normativa link behavior (desktop)
     const normativaLink = document.getElementById('normativa-link');
     if (normativaLink) {
         normativaLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const isAuthenticated = await checkAuthStatus();
+            if (isAuthenticated) {
+                window.location.href = '/normativa';
+            } else {
+                window.location.href = '/login';
+            }
+        });
+    }
+    
+    // Update normativa link behavior (mobile)
+    const mobileNormativaLink = document.getElementById('mobile-normativa-link');
+    if (mobileNormativaLink) {
+        mobileNormativaLink.addEventListener('click', async (e) => {
             e.preventDefault();
             const isAuthenticated = await checkAuthStatus();
             if (isAuthenticated) {
@@ -96,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Update active navigation link
 function updateActiveNavigation(currentPath) {
+    // Update desktop navigation
     const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
@@ -108,6 +123,27 @@ function updateActiveNavigation(currentPath) {
         } else if (currentPath === '/miembros' && link.getAttribute('href') === '/miembros') {
             link.classList.add('active');
         } else if (currentPath === '/normativa' && link.getAttribute('href') === '/normativa') {
+            link.classList.add('active');
+        }
+    });
+    
+    // Update mobile navigation
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+    
+    mobileNavLinks.forEach(link => {
+        link.classList.remove('active');
+        const linkPath = link.getAttribute('data-path') || link.getAttribute('href');
+        
+        if (currentPath === '/' && linkPath === '/') {
+            link.classList.add('active');
+        } else if (currentPath === '/logros' && linkPath === '/logros') {
+            link.classList.add('active');
+        } else if (currentPath === '/miembros' && linkPath === '/miembros') {
+            link.classList.add('active');
+        } else if (currentPath === '/normativa' && linkPath === '/normativa') {
+            link.classList.add('active');
+        } else if (currentPath.startsWith('/pagina/') && linkPath === '/normativa') {
+            // If viewing a normativa page, keep normativa active
             link.classList.add('active');
         }
     });
