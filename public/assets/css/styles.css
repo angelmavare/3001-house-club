@@ -935,6 +935,30 @@ body {
     box-shadow: 0 2px 8px rgba(26, 77, 46, 0.3);
 }
 
+.profile-value.route-count-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-value.route-count-value .route-count-badge {
+    background: linear-gradient(135deg, #1a4d2e 0%, #4a7c59 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(26, 77, 46, 0.3);
+}
+
+.profile-value.route-count-value .route-count-label {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
 .profile-value.tags-value {
     display: flex;
     flex-wrap: wrap;

@@ -1698,25 +1698,38 @@ async function displayMemberProfile(member) {
                     </div>
                 </div>
             `;
-        } else if (field.key === 'participatedRoutes' && propertyFound && propertyFound.type === 'multi_select') {
-            // Routes get tag styling
-            const tags = propertyFound.multi_select || [];
-            if (tags.length > 0) {
-                const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag.name)}</span>`).join('');
-                profileContent += `
-                    <div class="profile-item">
-                        <div class="profile-label">${field.displayName}</div>
-                        <div class="profile-value tags-value">${tagsHtml}</div>
-                    </div>
-                `;
-            } else {
-                profileContent += `
-                    <div class="profile-item">
-                        <div class="profile-label">${field.displayName}</div>
-                        <div class="profile-value">No hay rutas registradas</div>
-                    </div>
-                `;
+        } else if (field.key === 'participatedRoutes') {
+            // Routes should show count only
+            let routeCount = 0;
+            
+            if (propertyFound) {
+                if (propertyFound.type === 'multi_select' && propertyFound.multi_select) {
+                    routeCount = propertyFound.multi_select.length;
+                } else if (propertyFound.type === 'relation' && propertyFound.relation) {
+                    // If it's a relation, we might need to count the array
+                    // For now, we'll check if there's a rollup or count
+                    routeCount = 0; // Will be handled by rollup if available
+                } else if (propertyFound.type === 'rollup' && propertyFound.rollup) {
+                    // If it's a rollup that counts relations
+                    if (propertyFound.rollup.type === 'number') {
+                        routeCount = propertyFound.rollup.number || 0;
+                    } else if (propertyFound.rollup.type === 'array' && propertyFound.rollup.array) {
+                        routeCount = propertyFound.rollup.array.length;
+                    }
+                } else if (propertyFound.type === 'number') {
+                    routeCount = propertyFound.number || 0;
+                }
             }
+            
+            profileContent += `
+                <div class="profile-item">
+                    <div class="profile-label">${field.displayName}</div>
+                    <div class="profile-value route-count-value">
+                        <span class="route-count-badge">${routeCount}</span>
+                        <span class="route-count-label">${routeCount === 1 ? 'Ruta' : 'Rutas'}</span>
+                    </div>
+                </div>
+            `;
         } else {
             // Regular properties
             profileContent += `
