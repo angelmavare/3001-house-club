@@ -1014,8 +1014,8 @@ async function loadNormativaDirectly() {
     } catch (error) {
         console.error('loadNormativaDirectly: Error loading normativa:', error);
         const pageContent = document.getElementById('page-content');
-        if (normativaContent) {
-            normativaContent.innerHTML = `<p class="error">Error al cargar la normativa: ${error.message}</p>`;
+        if (pageContent) {
+            pageContent.innerHTML = `<p class="error">Error al cargar la normativa: ${error.message}</p>`;
         }
     } finally {
         const loadingElement = document.getElementById('loading');

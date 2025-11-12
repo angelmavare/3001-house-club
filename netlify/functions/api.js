@@ -22,6 +22,10 @@ const CLUB_DATABASES = {
   routes: '12a03b7b-0a84-818c-94e6-000caef294fe'
 };
 
+// Private page ID (format: with or without dashes)
+// Original ID: 12a03b7b0a84801e839cdace8e210497
+const PRIVATE_PAGE_ID = '12a03b7b-0a84-801e-839c-dace8e210497';
+
 // Cache for data source IDs (database_id -> data_source_id)
 const dataSourceCache = new Map();
 
@@ -333,6 +337,131 @@ app.get('/api/databases/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching database:', error);
     res.status(500).json({ error: 'Failed to fetch database' });
+  }
+});
+
+// API route to retrieve a private page
+app.get('/api/pages/:id', async (req, res) => {
+  try {
+    const pageId = req.params.id;
+    console.log('Fetching page:', pageId);
+    
+    // Retrieve the page
+    const page = await notion.pages.retrieve({
+      page_id: pageId
+    });
+    
+    res.json(page);
+  } catch (error) {
+    console.error('Error fetching page:', error);
+    if (error.code === 'object_not_found') {
+      res.status(404).json({ 
+        error: 'Page not found or integration does not have access',
+        message: 'Make sure the page is shared with your Notion integration'
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch page', details: error.message });
+    }
+  }
+});
+
+// API route to get children of a page (list sub-pages)
+app.get('/api/pages/:id/children', async (req, res) => {
+  try {
+    const pageId = req.params.id;
+    const pageSize = parseInt(req.query.page_size) || 100;
+    const startCursor = req.query.start_cursor || undefined;
+    
+    console.log('Fetching children of page:', pageId);
+    
+    // Get block children (this includes sub-pages)
+    const response = await notion.blocks.children.list({
+      block_id: pageId,
+      page_size: pageSize,
+      start_cursor: startCursor
+    });
+    
+    // Filter to get only child pages (type: "child_page")
+    const childPages = response.results.filter(block => block.type === 'child_page');
+    
+    // Also get regular blocks for content
+    const contentBlocks = response.results.filter(block => block.type !== 'child_page');
+    
+    res.json({
+      child_pages: childPages.map(page => ({
+        id: page.id,
+        title: page.child_page?.title || 'Untitled',
+        created_time: page.created_time,
+        last_edited_time: page.last_edited_time,
+        has_children: page.has_children
+      })),
+      content_blocks: contentBlocks,
+      has_more: response.has_more,
+      next_cursor: response.next_cursor,
+      total_children: response.results.length
+    });
+  } catch (error) {
+    console.error('Error fetching page children:', error);
+    if (error.code === 'object_not_found') {
+      res.status(404).json({ 
+        error: 'Page not found or integration does not have access',
+        message: 'Make sure the page is shared with your Notion integration'
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch page children', details: error.message });
+    }
+  }
+});
+
+// API route for the specific private page
+app.get('/api/private-page', async (req, res) => {
+  try {
+    console.log('Fetching private page:', PRIVATE_PAGE_ID);
+    
+    // Retrieve the page
+    const page = await notion.pages.retrieve({
+      page_id: PRIVATE_PAGE_ID
+    });
+    
+    // Get children (sub-pages and content)
+    const children = await notion.blocks.children.list({
+      block_id: PRIVATE_PAGE_ID,
+      page_size: 100
+    });
+    
+    const childPages = children.results.filter(block => block.type === 'child_page');
+    const contentBlocks = children.results.filter(block => block.type !== 'child_page');
+    
+    res.json({
+      page: {
+        id: page.id,
+        created_time: page.created_time,
+        last_edited_time: page.last_edited_time,
+        url: page.url,
+        properties: page.properties,
+        icon: page.icon,
+        cover: page.cover
+      },
+      content_blocks: contentBlocks,
+      child_pages: childPages.map(child => ({
+        id: child.id,
+        title: child.child_page?.title || 'Untitled',
+        created_time: child.created_time,
+        last_edited_time: child.last_edited_time,
+        has_children: child.has_children
+      })),
+      total_children: children.results.length
+    });
+  } catch (error) {
+    console.error('Error fetching private page:', error);
+    if (error.code === 'object_not_found') {
+      res.status(404).json({ 
+        error: 'Page not found or integration does not have access',
+        message: 'Make sure the page is shared with your Notion integration. See README for instructions.'
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch private page', details: error.message });
+    }
   }
 });
 
